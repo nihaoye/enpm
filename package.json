@@ -1,0 +1,57 @@
+{
+  "name": "enpm",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "dependencies": {
+    "agentkeepalive": "^3.5.1",
+    "crypto": "^1.0.1",
+    "egg": "^2.2.1",
+    "egg-scripts": "^2.5.0",
+    "egg-sequelize": "^4.1.0",
+    "fs-cnpm": "^1.2.0",
+    "fs-extra": "^7.0.0",
+    "humanize-ms": "^1.2.1",
+    "normalize-registry-metadata": "^1.1.2",
+    "npm-api": "^0.4.12",
+    "os": "^0.1.1",
+    "semver": "^5.5.1",
+    "sqlite3": "^4.0.2",
+    "urllib": "^2.29.1",
+    "utility": "^1.14.0"
+  },
+  "devDependencies": {
+    "autod": "^3.0.1",
+    "autod-egg": "^1.0.0",
+    "egg-bin": "^4.3.5",
+    "egg-ci": "^1.8.0",
+    "egg-mock": "^3.14.0",
+    "eslint": "^4.11.0",
+    "eslint-config-egg": "^6.0.0",
+    "webstorm-disable-index": "^1.2.0"
+  },
+  "engines": {
+    "node": ">=8.9.0"
+  },
+  "scripts": {
+    "start": "egg-scripts start --daemon --title=egg-server-enpm",
+    "stop": "egg-scripts stop --title=egg-server-enpm",
+    "dev": "egg-bin dev",
+    "debug": "egg-bin debug",
+    "test": "npm run lint -- --fix && npm run test-local",
+    "test-local": "egg-bin test",
+    "cov": "egg-bin cov",
+    "lint": "eslint .",
+    "ci": "npm run lint && npm run cov",
+    "autod": "autod"
+  },
+  "ci": {
+    "version": "8"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "author": "zyh",
+  "license": "MIT"
+}
