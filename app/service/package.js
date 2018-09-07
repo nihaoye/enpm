@@ -307,5 +307,18 @@ class PackageService extends Service {
 
         return result;
     };
+    async savePackageReadme(name, readme, latestVersion) {
+        const {PackageReadme}=this.app.model;
+        var item = await PackageReadme.find({ where: { name: name,version:latestVersion} });
+        if (!item) {
+            item = PackageReadme.build({
+                name: name,
+            });
+            item.readme = readme;
+            item.version = latestVersion;
+            return await item.save();
+        }
+        return item;
+    };
 }
 module.exports = PackageService;

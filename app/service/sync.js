@@ -22,14 +22,15 @@ class SyncPackage extends Service{
     async syncOneVersion(name,version){
         var _self=this;
         var sourcePackage=await this.service.package.getModuleByRange(name,version);
-        if(!sourcePackage){
-            var url="/"+name+"/"+(version||"latest");
-            var res=await npm.request(url);
-            if(res.status!=200){
-                throw new Error("同步包失败");
-            }
-            sourcePackage=res.data;
+        if(sourcePackage){
+            return sourcePackage;
         }
+        var url="/"+name+"/"+(version||"latest");
+        var res=await npm.request(url);
+        if(res.status!=200){
+            throw new Error("同步包失败");
+        }
+        sourcePackage=res.data;
         var downurl = sourcePackage.dist.tarball;
         var filename = path.basename(downurl);
         var filepath = common.getTarballFilepath(filename);
@@ -166,7 +167,7 @@ class SyncPackage extends Service{
                 new Date(mod.publish_time),
                 true,
                 moduleAbbreviatedId);
-            return r;
+            return sourcePackage;
         }
     }
 
