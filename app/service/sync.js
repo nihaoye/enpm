@@ -4,6 +4,7 @@ const utility=require("utility");
 const path=require("path");
 const crypto=require("crypto");
 const fs=require('fs');
+const fse=require("fs-extra");
 const common=require("../utils/common");
 const config=require("../../config/common");
 const os = require('os');
@@ -18,19 +19,31 @@ var USER_AGENT = 'sync.cnpmjs.org/' + config.version +
     ' syncConcurrency/' + '1' +
     ' ' + urllib.USER_AGENT;
 const npm = require('../utils/npm');
+const EventEmitter=require("eventemitter3");
+const ee=new EventEmitter();
+let waitingSyncPackages=[];//等待同步的包
+const max_task_num=config.syncMaxTaskCount;//最大任务数
+let taskCount=0;//正在进行的任务数
+function addWaitingSyncPackages(name,version){
+    for(let item of waitingSyncPackages){
+        if(item.name===name&&item.version===version){
+            return;
+        }
+    }
+    waitingSyncPackages.push({name:name,version:version});
+}
+function removeWaitingSyncPackages(name,version){
+    for(let i=0;i<waitingSyncPackages.length;i++){
+        var item=waitingSyncPackages[i];
+        if(item.name===name&&item.version===version){
+            waitingSyncPackages.splice(i,1)
+        }
+    }
+}
 class SyncPackage extends Service{
-    async syncOneVersion(name,version){
+    async syncPackage(versionIndex,sourcePackage){
+        let logger=this.app.logger;
         var _self=this;
-        var sourcePackage=await this.service.package.getModuleByRange(name,version);
-        if(sourcePackage){
-            return sourcePackage;
-        }
-        var url="/"+name+"/"+(version||"latest");
-        var res=await npm.request(url);
-        if(res.status!=200){
-            throw new Error("同步包失败");
-        }
-        sourcePackage=res.data;
         var downurl = sourcePackage.dist.tarball;
         var filename = path.basename(downurl);
         var filepath = common.getTarballFilepath(filename);
@@ -45,10 +58,10 @@ class SyncPackage extends Service{
             gzip: true,
         };
         var dependencies = Object.keys(sourcePackage.dependencies || {});
-        var devDependencies = [];
+/*        var devDependencies = [];
         if (this.syncDevDependencies) {
             devDependencies = Object.keys(sourcePackage.devDependencies || {});
-        }
+        }*/
         // add module dependence
         await this.service.package.addDependencies(sourcePackage.name, dependencies);
         var shasum = crypto.createHash('sha1');
@@ -58,7 +71,7 @@ class SyncPackage extends Service{
             try {
                 r = await urllib.request(downurl, options);
             } catch (err) {
-                //logger.syncInfo('[sync_module_worker] download %j to %j error: %s', downurl, filepath, err);
+                logger.error('[sync_worker] download %j to %j error: %s', downurl, filepath, err);
                 throw err;
             }
             var statusCode = r.status || -1;
@@ -67,18 +80,14 @@ class SyncPackage extends Service{
                 throw err;
             }
             // read and check
-            var rs = fs.createReadStream(filepath);
-            await new Promise(function(resolve){
-                rs.on('data', function (data) {
-                    shasum.update(data);
-                    dataSize += data.length;
-                    resolve()
-                });
+            await fse.readFile(filepath).then((data)=>{
+                shasum.update(data);
+                dataSize += data.length;
             });
             if (dataSize === 0) {
                 var err = new Error('Download ' + downurl + ' file size is zero');
                 err.name = 'DownloadTarballSizeZeroError';
-                //logger.syncInfo('[sync_module_worker] %s', err.message);
+                logger.error('[sync_worker] %s', err.message);
                 throw err;
             }
             // check shasum
@@ -87,7 +96,7 @@ class SyncPackage extends Service{
                 var err = new Error('Download ' + downurl + ' shasum:' + shasum +
                     ' not match ');
                 err.name = 'DownloadTarballShasumError';
-                //logger.syncInfo('[sync_module_worker] %s', err.message);
+                logger.error('[sync_worker] %s', err.message);
                 throw err;
             }
             options = {
@@ -96,26 +105,20 @@ class SyncPackage extends Service{
                 shasum: shasum
             };
             // upload to NFS
-            //logger.syncInfo('[sync_module_worker] uploading %j to nfs', options);
             var result;
             try {
                 result = await nfs.upload(filepath, options);
             } catch (err) {
-                //logger.syncInfo('[sync_module_worker] upload %j to nfs error: %s', err);
+                logger.error('[sync_worker] upload %j to nfs error: %s', err);
                 throw err;
             }
-            //logger.syncInfo('[sync_module_worker] uploaded, saving %j to database', result);
             var r = await afterUpload(result);
-            /*logger.syncInfo('[sync_module_worker] sync %s@%s done!',
-                sourcePackage.name, sourcePackage.version);*/
             return r;
         } finally {
             // remove tmp file whatever
             fs.unlink(filepath, utility.noop);
         }
         async function afterUpload(result) {
-            //make sure sync module have the correct author info
-            //only if can not get maintainers, use the username
             var author = "admin";
             if (Array.isArray(sourcePackage.maintainers) && sourcePackage.maintainers.length > 0) {
                 author = sourcePackage.maintainers[0].name || username;
@@ -153,22 +156,154 @@ class SyncPackage extends Service{
             }
             mod.package.dist = dist;
             var r = await _self.service.package.saveModule(mod);
-            var moduleAbbreviatedId = null;
-            if (true) {
-                var moduleAbbreviatedResult = await _self.service.package.saveModuleAbbreviated(mod);
-                moduleAbbreviatedId = moduleAbbreviatedResult.id;
+            var moduleAbbreviatedResult = await _self.service.package.saveModuleAbbreviated(mod);
+            var moduleAbbreviatedId = moduleAbbreviatedResult.id;
+            return r;
+        }
+    }
+    async saveNpmUser(username) {
+        var {User} =this.app.model;
+        var user = await npm.getUser(username);
+        var existsUser = await User.findByName(username);
+        if (!user&&existsUser) {
+            if (existsUser && existsUser.isNpmUser) {
+                // delete it
+                await User.destroy({
+                    where: {
+                        name: username,
+                    }
+                });
+                return { exists: true, deleted: true, isNpmUser: true };
             }
-            console.log('    [%s:%s] done, insertId: %s, author: %s, version: %s, '
-                + 'size: %d, publish_time: %j, publish on cnpm: %s, '
-                + 'moduleAbbreviatedId: %s',
-                sourcePackage.name, version,
-                r.id,
-                author, mod.version, dataSize,
-                new Date(mod.publish_time),
-                true,
-                moduleAbbreviatedId);
+            return { exists: false };
+        }
+        if(!existsUser){
+            await User.saveNpmUser(user);
+        }
+        return user;
+    }
+    async sync({name,versionIndex,syncDevDeps}){
+        removeWaitingSyncPackages(name,versionIndex);
+        var logger=this.app.getLogger("syncLogger");
+        logger.info("[同步包开始]"+name+":"+versionIndex);
+        this.saveSyncTask({name:name,version:versionIndex,state:1});//把同步任务设置为同步中
+        versionIndex=versionIndex||"*";
+        var sourcePackage=await this.service.package.getModuleByRange(name,versionIndex);
+        if(sourcePackage){
+            logger.info("[同步包结束(已存在"+sourcePackage.version+",不需要同步)]"+name+":"+versionIndex);
+            this.saveSyncTask({name:name,version:versionIndex,state:2,result:"info:已存在符合版本的包，不需要同步"});
+            ee.emit("next",{name:name,version:versionIndex});
             return sourcePackage;
         }
+        var url="/"+name;
+        var res=await npm.request(url);
+        if(res.status!=200){
+            logger.warn("[同步包失败(请求包失败,网络状态码为:"+res.status+")]"+name+":"+versionIndex);
+            this.saveSyncTask({name:name,version:versionIndex,state:3,result:"error:请求包失败,网络状态码为:"+res.status});
+            ee.emit("next",{name:name,version:versionIndex});
+            //throw new Error(res.data||"同步包失败!");
+            return null;
+        }
+        var pkg=res.data;
+        var versions=Object.keys(pkg.versions);
+        if(!semver.validRange(versionIndex)){
+            logger.warn('[同步包失败(版本校验错误,不同步该版本)]'+name+":"+versionIndex);
+            this.saveSyncTask({name:name,version:versionIndex,state:3,result:"error:同步包失败(版本校验错误)"});
+            ee.emit("next",{name:name,version:versionIndex});
+            return null;
+        }
+        var latestversion=semver.maxSatisfying(versions,versionIndex);
+        sourcePackage=pkg.versions[latestversion];
+        if(!latestversion){
+            logger.warn('[同步包失败(没有该版本的包,不同步该版本)]'+name+":"+versionIndex);
+            this.saveSyncTask({name:name,version:versionIndex,state:3,result:"error:同步包失败(上游服务器没有该版本的包)"});
+            ee.emit("next",{name:name,version:versionIndex});
+            return null;
+        }
+        var deps=sourcePackage.dependencies;
+        var devDeps=sourcePackage.devDependencies;
+        for(let k in deps){
+            addWaitingSyncPackages(k,deps[k]);
+        }
+        if(syncDevDeps){
+            for(let k in devDeps){
+                addWaitingSyncPackages(k,devDeps[k]);
+            }
+        }
+        return await this.app.model.transaction().then(async (t)=>{
+            try {
+                //同步包
+                await this.syncPackage(versionIndex, sourcePackage);
+                //同步readme
+                await this.service.package.savePackageReadme(name, pkg.readme, latestversion);
+                for (let user of sourcePackage.maintainers) {
+                    await Promise.all([this.app.model.NpmModuleMaintainer.addMaintainer(name, user.name), this.saveNpmUser(user.name)]);
+                }
+                if (pkg['dist-tags']) {
+                    let arr = [];
+                    for (let k in pkg['dist-tags']) {
+                        arr.push(this.service.package.addModuleTag(name, k, pkg['dist-tags'][k]));
+                    }
+                    await Promise.all(arr);
+                }
+                if (pkg.users) {
+                    await this.service.package.addStars(name, Object.keys(pkg.users));
+                }
+                logger.info("[同步包成功]" + name + ":" + versionIndex);
+                this.saveSyncTask({name: name, version: versionIndex, state: 2});
+                await t.commit();
+                ee.emit("next", {name: name, version: versionIndex});
+                return sourcePackage;
+            }catch(e){
+                await t.rollback();
+                logger.warn("[同步包失败，回滚相关数据库操作...]"+name+":"+versionIndex+"\n"+JSON.stringify(e));
+                this.saveSyncTask({name:name,version:versionIndex,state:3,result:"error:同步包失败，已回滚数据库"});
+                ee.emit("next", {name: name, version: versionIndex});
+                return null;
+            }
+        })
+    }
+    async sync_worker(name,versionIndex,syncDevDeps){
+        const logger=this.app.getLogger("syncLogger");
+        versionIndex=versionIndex||"*";
+        if(!name)return;
+        taskCount+=1;
+        logger.warn("---------------[执行同步包任务开始]"+(syncDevDeps?"[并同步该包的开发依赖包]":"")+name+":"+versionIndex+" -------------------------");
+        this.sync({name,versionIndex,syncDevDeps});
+        return new Promise(resolve => {
+            ee.on("next",(obj)=>{
+                //taskCount-=1;
+                if(waitingSyncPackages.length===0){
+                    logger.warn("---------------[同步结束]------------------");
+                    ee.off("next");
+                    resolve(true);
+                    return;
+                }
+                this.sync({name:waitingSyncPackages[0].name,versionIndex:waitingSyncPackages[0].version})
+                /*let num=max_task_num-taskCount;//需要启动的任务数
+                if(num>waitingSyncPackages.length-1){
+                    num=waitingSyncPackages.length-1;
+                }
+                let startSyncPackages=[];
+                for(let i=0;i<=num;i++){
+                    taskCount+=1;
+                }*/
+            })
+        })
+    }
+    async saveSyncTask({name,version,state,result}){
+        state=state||0;
+        result=result||"";
+        const syncTask=this.app.model.SyncTask;
+        let item=await syncTask.find({where:{name,version}});
+        if(!item){
+            await syncTask.create({name,version,state,result},{transaction:null});
+        }else{
+            await item.update({result,state},{transaction:null});
+        }
+    }
+    showWaiting(){
+        return waitingSyncPackages;
     }
 
 }
