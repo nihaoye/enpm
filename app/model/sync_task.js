@@ -24,7 +24,7 @@ module.exports = app => {
         state:{
             type:INTEGER,
             allowNull: false,
-            comment: '同步状态,0:未同步|1:同步中|2:同步成功|3:同步失败',
+            comment: '同步状态,0:未同步|1:同步中|2:同步成功|3:同步失败|4:已忽略',
             defaultValue:0,
         }
     }, {

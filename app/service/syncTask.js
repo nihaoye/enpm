@@ -1,7 +1,10 @@
 const Service = require('egg').Service;
 class SyncTaskService extends Service {
-    async listTask(){
-
+    async listNoSTask(){
+        const syncTask=this.app.model.SyncTask;
+        const Op=this.app.model.Op;
+        let list =await syncTask.findAll({where:{state:{[Op.or]:[0,3]}}});
+        return list;
     }
     async addTask({name,version,description}){
         const syncTask=this.app.model.SyncTask;

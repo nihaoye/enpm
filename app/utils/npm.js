@@ -3,6 +3,7 @@ var ms = require('humanize-ms');
 var cleanNpmMetadata = require('normalize-registry-metadata');
 var urllib = require('./urllib');
 var config = require('../../config/common');
+var path=require("path");
 var USER_AGENT = 'npm_service.cnpmjs.org/' + config.version + ' ' + urllib.USER_AGENT;
 async function request(url, options) {
     options = options || {};
@@ -14,7 +15,7 @@ async function request(url, options) {
     options.gzip = true;
     options.followRedirect = true;
     var registry = options.registry || config.sourceNpmRegistry;
-    url = registry + url;
+    url = registry+url;
     var r;
     try {
         r = await urllib.request(url, options);

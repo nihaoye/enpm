@@ -14,6 +14,6 @@ module.exports={
         admin: 'admin@cnpmjs.org',
     },
     scopes: [ '@enpm'],
-    nfsPath:path.join("../.enpm","nfs"),
-    syncMaxTaskCount:4
+    nfsPath:path.join("./",".enpm/nfs"),
+    syncMaxTaskCount:1
 };

@@ -9,7 +9,7 @@ module.exports = app => {
   router.get("/sync/:name/:version",controller.syncTask.startTaskByNameVersion);
   router.get("/task/add",controller.syncTask.addTask);
   router.get("/task/showWait",controller.package.showWaiting);
-
+  router.get("/task/startNoSTasks",controller.syncTask.startNoSTasks);
   //下载
   router.get(/^\/(@[\w\-\.]+\/[\w\-\.]+)\/download\/(@[\w\-\.]+\/[\w\-\.]+)$/,controller.download.downPackage);
   router.get('/:name/download/:filename',controller.download.downPackage);

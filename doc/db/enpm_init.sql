@@ -4,7 +4,7 @@ Navicat SQLite Data Transfer
 Source Server         : enpm
 Source Server Version : 30808
 Source Host           : :0
-
+sqlite_sequence
 Target Server Type    : SQLite
 Target Server Version : 30808
 File Encoding         : 65001
@@ -124,16 +124,6 @@ CREATE TABLE `package_readme` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` VA
 -- Records of package_readme
 -- ----------------------------
 
--- ----------------------------
--- Table structure for sqlite_sequence
--- ----------------------------
-DROP TABLE IF EXISTS "main"."sqlite_sequence";
-CREATE TABLE sqlite_sequence(name,seq);
-
--- ----------------------------
--- Records of sqlite_sequence
--- ----------------------------
-INSERT INTO "main"."sqlite_sequence" VALUES ('sync_task', 43);
 
 -- ----------------------------
 -- Table structure for sync_task

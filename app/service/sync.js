@@ -195,10 +195,18 @@ class SyncPackage extends Service{
             ee.emit("next",{name:name,version:versionIndex});
             return sourcePackage;
         }
-        var url="/"+name;
-        var res=await npm.request(url);
+        var url="/"+name.replace('/', '%2f');
+        var res={};
+        try{
+            res=await npm.request(url);
+        }catch(e){
+            logger.warn("[同步包失败(请求包失败,可能网络超时)]"+name+":"+versionIndex+"\n"+JSON.stringify(e));
+            this.saveSyncTask({name:name,version:versionIndex,state:3,result:"error:同步包失败(请求包失败,可能网络超时)"});
+            ee.emit("next",{name:name,version:versionIndex});
+            return null;
+        }
         if(res.status!=200){
-            logger.warn("[同步包失败(请求包失败,网络状态码为:"+res.status+")]"+name+":"+versionIndex);
+            logger.warn("[同步包失败(请求包失败,网络状态码为:"+res.status+")]"+name+":"+versionIndex+"\n"+JSON.stringify(res.data));
             this.saveSyncTask({name:name,version:versionIndex,state:3,result:"error:请求包失败,网络状态码为:"+res.status});
             ee.emit("next",{name:name,version:versionIndex});
             //throw new Error(res.data||"同步包失败!");
@@ -215,8 +223,12 @@ class SyncPackage extends Service{
         var latestversion=semver.maxSatisfying(versions,versionIndex);
         sourcePackage=pkg.versions[latestversion];
         if(!latestversion){
-            logger.warn('[同步包失败(没有该版本的包,不同步该版本)]'+name+":"+versionIndex);
-            this.saveSyncTask({name:name,version:versionIndex,state:3,result:"error:同步包失败(上游服务器没有该版本的包)"});
+            var errorStr="没有符合版本的包";
+            if(versionIndex==="*"){
+                errorStr+="，可能该包暂时没有正式版本发布，可尝试同步明确的版本号";
+            }
+            logger.warn('[同步包失败('+errorStr+')]'+name+":"+versionIndex);
+            this.saveSyncTask({name:name,version:versionIndex,state:3,result:"error:同步包失败("+errorStr+")"});
             ee.emit("next",{name:name,version:versionIndex});
             return null;
         }
@@ -256,8 +268,8 @@ class SyncPackage extends Service{
                 return sourcePackage;
             }catch(e){
                 await t.rollback();
-                logger.warn("[同步包失败，回滚相关数据库操作...]"+name+":"+versionIndex+"\n"+JSON.stringify(e));
-                this.saveSyncTask({name:name,version:versionIndex,state:3,result:"error:同步包失败，已回滚数据库"});
+                logger.warn("[同步包失败,可能回滚数据库]"+name+":"+versionIndex+"\n"+JSON.stringify(e));
+                this.saveSyncTask({name:name,version:versionIndex,state:3,result:"error:同步包失败,可能回滚数据库,详情可查看服务器包同步日志"});
                 ee.emit("next", {name: name, version: versionIndex});
                 return null;
             }
