@@ -1,13 +1,24 @@
 module.exports = app => {
     const {STRING,TEXT,INTEGER} = app.Sequelize;
     const SyncTask = app.model.define('SyncTask', {
+        taskId: {
+            type: STRING(32),
+            allowNull: false,
+            comment: '任务的id',
+        },
+        sync_type:{
+            type:STRING(8),
+            allowNull:true,
+            comment:"任务的同步类型:pkg|devDep|dep",
+            defaultValue:"pkg"
+        },
         name: {
-            type: STRING(100),
+            type: STRING(32),
             allowNull: false,
             comment: 'SyncTask name',
         },
         version: {
-            type: STRING(100),
+            type: STRING(32),
             allowNull: false,
             comment: 'SyncTask version',
         },
@@ -31,12 +42,6 @@ module.exports = app => {
         tableName: 'sync_task',
         comment: '数据库同步任务记录',
         updatedAt: false,
-        indexes: [
-            {
-                unique: true,
-                fields: ['name', 'version']
-            }
-        ]
     });
     return SyncTask;
 };
