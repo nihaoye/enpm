@@ -31,7 +31,7 @@ module.exports = appInfo => {
             collate: 'utf8_general_ci',
         },
         pool: {
-            max: 20,
+            max: 50,
             min: 0,
             acquire: 30000,
             idle: 10000

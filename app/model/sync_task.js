@@ -9,8 +9,14 @@ module.exports = app => {
         sync_type:{
             type:STRING(8),
             allowNull:true,
-            comment:"任务的同步类型:pkg|devDep|dep",
+            comment:"任务的同步类型:pkg|pkg_dp|devDep|dep",
             defaultValue:"pkg"
+        },
+        sync_dev:{
+            type:INTEGER,
+            allowNull:true,
+            comment:"是否同步开发依赖包",
+            defaultValue:0
         },
         name: {
             type: STRING(32),

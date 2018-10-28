@@ -14,24 +14,28 @@ class SyncTaskController extends Controller {
             this.ctx.body = result;
         }
     }
-
     async startTaskByNameVersion() {
         let params = this.ctx.params;
         let item = await this.app.model.SyncTask.findOne({where: {name: params.name, version: params.version}});
-        if (item) {
+        if (false) {
             if (item.state == 2) {
                 this.ctx.body = "该任务已经同步完成,不需要同步";
             } else if (item.state == 1) {
                 this.ctx.body = "该任务正在同步中...";
             } else {
                 this.ctx.body = "开启同步任务";
-                this.service.sync.sync_worker(params.name, params.version);
+                this.service.sync.sync_worker(item);
             }
         } else {
-            this.ctx.body = "任务开启失败，不存在该任务";
+            let task=await this.service.syncTask.addTask({
+                name:params.name,
+                version:params.version,
+                sync_dev:this.ctx.query.syncDev?1:0,
+            });
+            this.service.sync.sync_worker(task);
+            this.ctx.body="开启同步任务";
         }
     }
-
     async startNoSTasks() {
         let list = await this.service.syncTask.listNoSTask();
         if (list) {

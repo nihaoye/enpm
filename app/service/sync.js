@@ -182,21 +182,24 @@ class SyncPackage extends Service{
         }
         return user;
     }
-    async sync({taskId,name,versionIndex,syncType,syncDevDeps}){
-        syncType=syncType||'pkg';
+    async sync(task){//{taskId,name,versionIndex,syncType,syncDevDeps}
+        var taskId=task.taskId,
+            name=task.name,
+            versionIndex=task.version,
+            syncType=task.sync_type,
+            syncDevDeps=task.sync_dev;
         var logger=this.app.getLogger("syncLogger");
         taskId=taskId||utility.randomString(16);
         var logSign=`[${taskId}:${name}|${versionIndex}|${syncType}]`;
         logger.info(`${logSign}同步包开始`);
-        let syncTaskService=this.service.syncTask.syncTaskService(taskId,name,versionIndex);
-        await syncTaskService(syncType);//创建新任务
+        let syncTask=this.service.syncTask;
         versionIndex=versionIndex||"*";
         var sourcePackage=await this.service.package.getModuleByRange(name,versionIndex);
         var deps=null;
         var devDeps=null;
         if(sourcePackage){
-            logger.info(`${logSign}同步包结束(已存在"+sourcePackage.version+",不需要同步)`);
-           await syncTaskService({name:name,version:versionIndex,state:2,result:"info:已存在符合版本的包，不需要同步"});
+            logger.info(`${logSign}同步包结束(已存在符合版本的包,不需要同步)`);
+           await syncTask.updateTask(task.id,{state:2,result:"info:已存在符合版本的包，不需要同步"});
             if(syncDevDeps){
                 devDeps=sourcePackage.devDependencies;
                 let arr=[];
@@ -209,7 +212,7 @@ class SyncPackage extends Service{
                 Promise.all(arr);
             }
             ee.emit("next",{taskId:taskId,name:name,version:versionIndex});
-            return sourcePackage;
+            return task;
         }
         var url="/"+name.replace('/', '%2f');
         var res={};
@@ -217,24 +220,24 @@ class SyncPackage extends Service{
             res=await npm.request(url);
         }catch(e){
             logger.warn(`${logSign}同步包失败(请求包失败,可能网络超时`+'\n'+JSON.stringify(e));
-            await syncTaskService({name:name,version:versionIndex,state:3,result:"error:同步包失败(请求包失败,可能网络超时)"});
+            await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败(请求包失败,可能网络超时)"});
             ee.emit("next",{taskId:taskId,name:name,version:versionIndex});
-            return null;
+            return task;
         }
         if(res.status!=200){
             logger.warn(`${logSign}同步包失败(请求包失败,网络状态码为:${res.status}`+"\n"+JSON.stringify(res.data));
-            await syncTaskService({name:name,version:versionIndex,state:3,result:"error:请求包失败,网络状态码为:"+res.status});
+            await syncTask.updateTask(task.id,{state:3,result:"error:请求包失败,网络状态码为:"+res.status});
             ee.emit("next",{taskId:taskId,name:name,version:versionIndex});
             //throw new Error(res.data||"同步包失败!");
-            return null;
+            return task;
         }
         var pkg=res.data;
         var versions=Object.keys(pkg.versions);
         if(!semver.validRange(versionIndex)){
             logger.warn(`${logSign}同步包失败(版本校验错误,不同步该版本)`);
-            await syncTaskService({name:name,version:versionIndex,state:3,result:"error:同步包失败(版本校验错误)"});
+            await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败(版本校验错误)"});
             ee.emit("next",{taskId:taskId,name:name,version:versionIndex});
-            return null;
+            return task;
         }
         var latestversion=semver.maxSatisfying(versions,versionIndex);
         sourcePackage=pkg.versions[latestversion];
@@ -244,9 +247,9 @@ class SyncPackage extends Service{
                 errorStr+="，可能该包暂时没有正式版本发布，可尝试同步明确的版本号";
             }
             logger.warn(`${logSign}同步包失败${errorStr}`);
-            await syncTaskService({name:name,version:versionIndex,state:3,result:"error:同步包失败("+errorStr+")"});
+            await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败("+errorStr+")"});
             ee.emit("next",{taskId:taskId,name:name,version:versionIndex});
-            return null;
+            return task;
         }
         deps=sourcePackage.dependencies;
         devDeps=sourcePackage.devDependencies;
@@ -288,13 +291,16 @@ class SyncPackage extends Service{
                     for (let k in pkg['dist-tags']) {
                         arr.push(this.service.package.addModuleTag(name, k, pkg['dist-tags'][k]));
                         //addWaitingSyncPackages(name,pkg['dist-tags'][k]);
-                        arr.push(this.service.syncTask.addTask({//创建全新的任务
-                            taskId:taskId,
-                            name:k,
-                            version:devDeps[k],
-                            description:'dist-tags开启的任务',
-                            sync_type:'tag',
-                        }));
+                        if(pkg['dist-tags'][k]!==versionIndex){
+                            arr.push(this.service.syncTask.addTask({//创建新的任务
+                                taskId:taskId,
+                                name:name,
+                                version:pkg['dist-tags'][k],
+                                description:'dist-tags:'+k+'开启的任务',
+                                sync_type:'tag',
+                                sync_dev:task.sync_dev
+                            }));
+                        }
                     }
                     await Promise.all(arr);
                 }
@@ -302,36 +308,40 @@ class SyncPackage extends Service{
                     await this.service.package.addStars(name, Object.keys(pkg.users));
                 }
                 logger.info(`${logSign}同步包成功`);
-                await syncTaskService({name: name, version: versionIndex, state: 2});
+                await syncTask.updateTask(task.id,{state: 2});
                 await t.commit();
-                ee.emit("next", {taskId:taskId,name: name, version: versionIndex});
-                return sourcePackage;
+                ee.emit("next",{taskId:taskId,name: name, version: versionIndex});
+                return task;
             }catch(e){
                 await t.rollback();
                 logger.warn(`${logSign}同步包失败,可能回滚数据库`+"\n"+JSON.stringify(e));
-                await syncTaskService({name:name,version:versionIndex,state:3,result:"error:同步包失败,可能回滚数据库,详情可查看服务器包同步日志"});
+                await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败,可能回滚数据库,详情可查看服务器包同步日志"});
                 ee.emit("next", {taskId:taskId,name: name, version: versionIndex});
-                return null;
+                return task;
             }
         })
     }
-    async sync_worker(name,versionIndex,syncDevDeps){
+    async sync_worker(task){
+        let name=task.name,
+            versionIndex=task.version,
+            syncDevDeps=task.sync_dev;
         const logger=this.app.getLogger("syncLogger");
+        const syncTask=this.service.syncTask;
         versionIndex=versionIndex||"*";
         if(!name)return;
-        taskCount+=1;
         logger.warn("---------------[执行同步包任务开始]"+(syncDevDeps?"[并同步该包的开发依赖包]":"")+name+":"+versionIndex+" -------------------------");
-        this.sync({name,versionIndex,syncDevDeps});
+        this.sync(task);
         return new Promise(resolve => {
-            ee.on("next",(obj)=>{
+            ee.on("next",async (obj)=>{
                 //taskCount-=1;
-                if(waitingSyncPackages.length===0){
+                let task = await syncTask.findOneNoSTask(obj.taskId);
+                if(!task){
                     logger.warn("---------------[同步结束]------------------");
                     ee.off("next");
                     resolve(true);
-                    return;
+                    return obj.taskId;
                 }
-                this.sync({name:waitingSyncPackages[0].name,versionIndex:waitingSyncPackages[0].version})
+                this.sync(task)
                 /*let num=max_task_num-taskCount;//需要启动的任务数
                 if(num>waitingSyncPackages.length-1){
                     num=waitingSyncPackages.length-1;
@@ -343,8 +353,16 @@ class SyncPackage extends Service{
             })
         })
     }
-    showWaiting(){
-        return "";
+    async addSyncTask(name,versionIndex,syncDevDeps){
+        let task=await syncTask.addTask({
+            name:name,
+            version:versionIndex,
+            sync_dev:syncDevDeps?1:0,
+        });
+        return task;
+    }
+    showWaiting(taskId){
+        return this.service.syncTask.listNoSTask(taskId);
     }
 }
 module.exports=SyncPackage;
