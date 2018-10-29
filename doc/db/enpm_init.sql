@@ -4,12 +4,12 @@ Navicat SQLite Data Transfer
 Source Server         : enpm
 Source Server Version : 30808
 Source Host           : :0
-sqlite_sequence
+
 Target Server Type    : SQLite
 Target Server Version : 30808
 File Encoding         : 65001
 
-Date: 2018-09-09 22:41:02
+Date: 2018-10-29 20:41:27
 */
 
 PRAGMA foreign_keys = OFF;
@@ -124,6 +124,15 @@ CREATE TABLE `package_readme` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` VA
 -- Records of package_readme
 -- ----------------------------
 
+-- ----------------------------
+-- Table structure for sqlite_sequence
+-- ----------------------------
+DROP TABLE IF EXISTS "main"."sqlite_sequence";
+CREATE TABLE sqlite_sequence(name,seq);
+
+-- ----------------------------
+-- Records of sqlite_sequence
+-- ----------------------------
 
 -- ----------------------------
 -- Table structure for sync_task
@@ -131,60 +140,21 @@ CREATE TABLE `package_readme` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `name` VA
 DROP TABLE IF EXISTS "main"."sync_task";
 CREATE TABLE "sync_task" (
 "id"  INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-"name"  VARCHAR(20) NOT NULL,
-"version"  VARCHAR(20) NOT NULL,
+"taskId"  VARCHAR(16),
+"name"  VARCHAR(32) NOT NULL,
+"version"  VARCHAR(32) NOT NULL,
+"sync_dev"  INTEGER,
+"sync_type"  VARCHAR(8),
 "description"  TEXT,
 "state"  INTEGER,
 "result"  VARCHAR(255),
-"gmt_create"  DATETIME NOT NULL
+"trace_id"  INTEGER,
+"gmt_create"  DATETIME NOT NULL DEFAULT 0
 );
 
 -- ----------------------------
 -- Records of sync_task
 -- ----------------------------
-INSERT INTO "main"."sync_task" VALUES (1, 'gulp', '*', '', 0, null, '2018-09-09 14:39:46.574 +00:00');
-INSERT INTO "main"."sync_task" VALUES (2, 'webpack', '*', '', 0, null, '2018-09-09 14:39:46.715 +00:00');
-INSERT INTO "main"."sync_task" VALUES (3, 'grunt', '*', '', 0, null, '2018-09-09 14:39:46.820 +00:00');
-INSERT INTO "main"."sync_task" VALUES (4, 'http-server', '*', '', 0, null, '2018-09-09 14:39:46.921 +00:00');
-INSERT INTO "main"."sync_task" VALUES (5, 'pm2', '*', '', 0, null, '2018-09-09 14:39:47.043 +00:00');
-INSERT INTO "main"."sync_task" VALUES (6, 'fs-extra', '*', '', 0, null, '2018-09-09 14:39:47.162 +00:00');
-INSERT INTO "main"."sync_task" VALUES (7, 'vue', '*', '', 0, null, '2018-09-09 14:39:47.271 +00:00');
-INSERT INTO "main"."sync_task" VALUES (8, 'element-ui', '*', '', 0, null, '2018-09-09 14:39:47.371 +00:00');
-INSERT INTO "main"."sync_task" VALUES (9, 'semver', '*', '', 0, null, '2018-09-09 14:39:47.477 +00:00');
-INSERT INTO "main"."sync_task" VALUES (10, 'express', '*', '', 0, null, '2018-09-09 14:39:47.589 +00:00');
-INSERT INTO "main"."sync_task" VALUES (11, 'koa', '*', '', 0, null, '2018-09-09 14:39:47.703 +00:00');
-INSERT INTO "main"."sync_task" VALUES (12, 'koa-router', '*', '', 0, null, '2018-09-09 14:39:47.813 +00:00');
-INSERT INTO "main"."sync_task" VALUES (13, 'egg', '*', '', 0, null, '2018-09-09 14:39:47.920 +00:00');
-INSERT INTO "main"."sync_task" VALUES (14, 'egg-mock', '*', '', 0, null, '2018-09-09 14:39:48.019 +00:00');
-INSERT INTO "main"."sync_task" VALUES (15, 'sequelize', '*', '', 0, null, '2018-09-09 14:39:48.127 +00:00');
-INSERT INTO "main"."sync_task" VALUES (16, 'egg-sequelize', '*', '', 0, null, '2018-09-09 14:39:48.225 +00:00');
-INSERT INTO "main"."sync_task" VALUES (17, 'mysql2', '*', '', 0, null, '2018-09-09 14:39:48.336 +00:00');
-INSERT INTO "main"."sync_task" VALUES (18, 'sqlite3', '*', '', 0, null, '2018-09-09 14:39:48.436 +00:00');
-INSERT INTO "main"."sync_task" VALUES (19, 'angularjs', '*', '', 0, null, '2018-09-09 14:39:48.538 +00:00');
-INSERT INTO "main"."sync_task" VALUES (20, 'iview', '*', '', 0, null, '2018-09-09 14:39:48.644 +00:00');
-INSERT INTO "main"."sync_task" VALUES (21, 'axios', '*', '', 0, null, '2018-09-09 14:39:48.746 +00:00');
-INSERT INTO "main"."sync_task" VALUES (22, 'fetch', '*', '', 0, null, '2018-09-09 14:39:48.862 +00:00');
-INSERT INTO "main"."sync_task" VALUES (23, 'vue-router', '*', '', 0, null, '2018-09-09 14:39:48.979 +00:00');
-INSERT INTO "main"."sync_task" VALUES (24, 'mock', '*', '', 0, null, '2018-09-09 14:39:49.086 +00:00');
-INSERT INTO "main"."sync_task" VALUES (25, 'mocha', '*', '', 0, null, '2018-09-09 14:39:49.200 +00:00');
-INSERT INTO "main"."sync_task" VALUES (26, 'chai', '*', '', 0, null, '2018-09-09 14:39:49.317 +00:00');
-INSERT INTO "main"."sync_task" VALUES (27, 'ol', '*', '', 0, null, '2018-09-09 14:39:49.443 +00:00');
-INSERT INTO "main"."sync_task" VALUES (28, 'typescript', '*', '', 0, null, '2018-09-09 14:39:49.569 +00:00');
-INSERT INTO "main"."sync_task" VALUES (29, 'cesium', '*', '', 0, null, '2018-09-09 14:39:49.693 +00:00');
-INSERT INTO "main"."sync_task" VALUES (30, 'echarts', '*', '', 0, null, '2018-09-09 14:39:49.811 +00:00');
-INSERT INTO "main"."sync_task" VALUES (31, 'd3', '*', '', 0, null, '2018-09-09 14:39:49.927 +00:00');
-INSERT INTO "main"."sync_task" VALUES (32, 'three', '*', '', 0, null, '2018-09-09 14:39:50.053 +00:00');
-INSERT INTO "main"."sync_task" VALUES (33, 'utility', '*', '', 0, null, '2018-09-09 14:39:50.200 +00:00');
-INSERT INTO "main"."sync_task" VALUES (34, 'moment', '*', '', 0, null, '2018-09-09 14:39:50.324 +00:00');
-INSERT INTO "main"."sync_task" VALUES (35, 'dayjs', '*', '', 0, null, '2018-09-09 14:39:50.428 +00:00');
-INSERT INTO "main"."sync_task" VALUES (36, ' @babel/core', '*', '', 0, null, '2018-09-09 14:39:50.544 +00:00');
-INSERT INTO "main"."sync_task" VALUES (37, '@babel/cli', '*', '', 0, null, '2018-09-09 14:39:50.678 +00:00');
-INSERT INTO "main"."sync_task" VALUES (38, '@babel/preset-env', '*', '', 0, null, '2018-09-09 14:39:50.819 +00:00');
-INSERT INTO "main"."sync_task" VALUES (39, '@babel/generator', '*', '', 0, null, '2018-09-09 14:39:50.952 +00:00');
-INSERT INTO "main"."sync_task" VALUES (40, 'html2canvas', '*', '', 0, null, '2018-09-09 14:39:51.076 +00:00');
-INSERT INTO "main"."sync_task" VALUES (41, 'imagemagick', '*', '', 0, null, '2018-09-09 14:39:51.185 +00:00');
-INSERT INTO "main"."sync_task" VALUES (42, 'gm', '*', '', 0, null, '2018-09-09 14:39:51.295 +00:00');
-INSERT INTO "main"."sync_task" VALUES (43, 'jsdoc', '*', '', 0, null, '2018-09-09 14:39:51.417 +00:00');
 
 -- ----------------------------
 -- Table structure for tag
@@ -307,12 +277,6 @@ CREATE INDEX "main"."package_readme_gmt_modified"
 ON "package_readme" ("gmt_modified" ASC);
 CREATE UNIQUE INDEX "main"."package_readme_name"
 ON "package_readme" ("name" ASC);
-
--- ----------------------------
--- Indexes structure for table sync_task
--- ----------------------------
-CREATE UNIQUE INDEX "main"."sync_task_name_version"
-ON "sync_task" ("name" ASC, "version" ASC);
 
 -- ----------------------------
 -- Indexes structure for table tag
