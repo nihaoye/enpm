@@ -21,25 +21,7 @@ var USER_AGENT = 'sync.cnpmjs.org/' + config.version +
 const npm = require('../utils/npm');
 const EventEmitter=require("eventemitter3");
 const ee=new EventEmitter();
-let waitingSyncPackages=[];//等待同步的包
-const max_task_num=config.syncMaxTaskCount;//最大任务数
-let taskCount=0;//正在进行的任务数
-/*function addWaitingSyncPackages(name,version){
-    for(let item of waitingSyncPackages){
-        if(item.name===name&&item.version===version){
-            return;
-        }
-    }
-    waitingSyncPackages.push({name:name,version:version});
-}
-function removeWaitingSyncPackages(name,version){
-    for(let i=0;i<waitingSyncPackages.length;i++){
-        var item=waitingSyncPackages[i];
-        if(item.name===name&&item.version===version){
-            waitingSyncPackages.splice(i,1)
-        }
-    }
-}*/
+
 class SyncPackage extends Service{
     async syncPackage(versionIndex,sourcePackage){
         let logger=this.app.logger;
@@ -193,25 +175,28 @@ class SyncPackage extends Service{
         var logSign=`[${taskId}:${name}|${versionIndex}|${syncType}]`;
         logger.info(`${logSign}同步包开始`);
         let syncTask=this.service.syncTask;
-        versionIndex=versionIndex||"*";
-        var sourcePackage=await this.service.package.getModuleByRange(name,versionIndex);
+        var sourcePackage=null;
+        sourcePackage=await this.service.package.getModuleByRange(name,versionIndex);
         var deps=null;
         var devDeps=null;
         if(sourcePackage){
             logger.info(`${logSign}同步包结束(已存在符合版本的包,不需要同步)`);
            await syncTask.updateTask(task.id,{state:2,result:"info:已存在符合版本的包，不需要同步"});
             if(syncDevDeps){
-                devDeps=sourcePackage.devDependencies;
+                devDeps=sourcePackage.package.devDependencies;
                 let arr=[];
-                arr.push(this.service.syncTask.addTask({
-                    taskId:taskId,
-                    name:k,
-                    version:devDeps[k],
-                    sync_type:'devDep',
-                }));
-                Promise.all(arr);
+                for(let k in devDeps) {
+                    arr.push(this.service.syncTask.addTask({
+                        taskId: taskId,
+                        name: k,
+                        version: devDeps[k],
+                        sync_type: 'devDep',
+                        trace_id:task.id
+                    }));
+                }
+                await Promise.all(arr);
             }
-            ee.emit("next",{taskId:taskId,name:name,version:versionIndex});
+            ee.emit("next"+task.taskId,task);
             return task;
         }
         var url="/"+name.replace('/', '%2f');
@@ -221,13 +206,13 @@ class SyncPackage extends Service{
         }catch(e){
             logger.warn(`${logSign}同步包失败(请求包失败,可能网络超时`+'\n'+JSON.stringify(e));
             await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败(请求包失败,可能网络超时)"});
-            ee.emit("next",{taskId:taskId,name:name,version:versionIndex});
+            ee.emit("next"+task.taskId,task);
             return task;
         }
         if(res.status!=200){
             logger.warn(`${logSign}同步包失败(请求包失败,网络状态码为:${res.status}`+"\n"+JSON.stringify(res.data));
             await syncTask.updateTask(task.id,{state:3,result:"error:请求包失败,网络状态码为:"+res.status});
-            ee.emit("next",{taskId:taskId,name:name,version:versionIndex});
+            ee.emit("next"+task.taskId,task);
             //throw new Error(res.data||"同步包失败!");
             return task;
         }
@@ -236,19 +221,19 @@ class SyncPackage extends Service{
         if(!semver.validRange(versionIndex)){
             logger.warn(`${logSign}同步包失败(版本校验错误,不同步该版本)`);
             await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败(版本校验错误)"});
-            ee.emit("next",{taskId:taskId,name:name,version:versionIndex});
+            ee.emit("next"+task.taskId,task);
             return task;
         }
-        var latestversion=semver.maxSatisfying(versions,versionIndex);
+        let latestversion=semver.maxSatisfying(versions,versionIndex);
         sourcePackage=pkg.versions[latestversion];
         if(!latestversion){
-            var errorStr="没有符合版本的包";
+            let errorStr="没有符合版本的包";
             if(versionIndex==="*"){
                 errorStr+="，可能该包暂时没有正式版本发布，可尝试同步明确的版本号";
             }
             logger.warn(`${logSign}同步包失败${errorStr}`);
             await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败("+errorStr+")"});
-            ee.emit("next",{taskId:taskId,name:name,version:versionIndex});
+            ee.emit("next"+task.taskId,task);
             return task;
         }
         deps=sourcePackage.dependencies;
@@ -260,8 +245,9 @@ class SyncPackage extends Service{
                 name:k,
                 version:deps[k],
                 sync_type:'dep',
+                trace_id:task.id
             }));
-            Promise.all(arr);
+            await Promise.all(arr);
             //addWaitingSyncPackages(k,deps[k]);
         }
         if(syncDevDeps){
@@ -272,8 +258,9 @@ class SyncPackage extends Service{
                     name:k,
                     version:devDeps[k],
                     sync_type:'devDep',
+                    trace_id:task.id
                 }));
-                Promise.all(arr);
+                await Promise.all(arr);
                 //addWaitingSyncPackages(k,devDeps[k]);
             }
         }
@@ -298,7 +285,8 @@ class SyncPackage extends Service{
                                 version:pkg['dist-tags'][k],
                                 description:'dist-tags:'+k+'开启的任务',
                                 sync_type:'tag',
-                                sync_dev:task.sync_dev
+                                sync_dev:task.sync_dev,
+                                trace_id:task.id
                             }));
                         }
                     }
@@ -310,13 +298,13 @@ class SyncPackage extends Service{
                 logger.info(`${logSign}同步包成功`);
                 await syncTask.updateTask(task.id,{state: 2});
                 await t.commit();
-                ee.emit("next",{taskId:taskId,name: name, version: versionIndex});
+                ee.emit("next"+task.taskId,task);
                 return task;
             }catch(e){
                 await t.rollback();
                 logger.warn(`${logSign}同步包失败,可能回滚数据库`+"\n"+JSON.stringify(e));
                 await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败,可能回滚数据库,详情可查看服务器包同步日志"});
-                ee.emit("next", {taskId:taskId,name: name, version: versionIndex});
+                ee.emit("next"+task.taskId, task);
                 return task;
             }
         })
@@ -327,21 +315,21 @@ class SyncPackage extends Service{
             syncDevDeps=task.sync_dev;
         const logger=this.app.getLogger("syncLogger");
         const syncTask=this.service.syncTask;
-        versionIndex=versionIndex||"*";
+        versionIndex=versionIndex||"latest";
         if(!name)return;
-        logger.warn("---------------[执行同步包任务开始]"+(syncDevDeps?"[并同步该包的开发依赖包]":"")+name+":"+versionIndex+" -------------------------");
+        logger.warn("---------------[执行同步包任务开始:"+task.taskId+"]"+(syncDevDeps?"[并同步该包的开发依赖包]":"")+name+":"+versionIndex+" -------------------------");
         this.sync(task);
         return new Promise(resolve => {
-            ee.on("next",async (obj)=>{
+            ee.on("next"+task.taskId,async (obj)=>{
                 //taskCount-=1;
-                let task = await syncTask.findOneNoSTask(obj.taskId);
-                if(!task){
-                    logger.warn("---------------[同步结束]------------------");
-                    ee.off("next");
-                    resolve(true);
-                    return obj.taskId;
+                let task2 = await syncTask.findOneNoSTask(obj.taskId);
+                if(!task2){
+                    logger.warn("---------------[同步结束:"+task.taskId+"]------------------");
+                    ee.off("next"+task.taskId);
+                    resolve(task);
+                    return obj;
                 }
-                this.sync(task)
+                this.sync(task2)
                 /*let num=max_task_num-taskCount;//需要启动的任务数
                 if(num>waitingSyncPackages.length-1){
                     num=waitingSyncPackages.length-1;
@@ -361,8 +349,14 @@ class SyncPackage extends Service{
         });
         return task;
     }
-    showWaiting(taskId){
-        return this.service.syncTask.listNoSTask(taskId);
+    async requestLatestPackage(name){
+        var url="/"+name.replace('/', '%2f');
+        let res=await npm.request(url);
+        let pkg=res.data;
+        let versions=Object.keys(pkg.versions);
+        let latestversion=semver.maxSatisfying(versions,"*");
+        let sourcePackage=pkg.versions[latestversion];
+        return sourcePackage;
     }
 }
 module.exports=SyncPackage;

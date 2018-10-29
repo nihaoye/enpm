@@ -15,8 +15,8 @@ class PackageController extends Controller {
         }*/
         ctx.body = "开启任务!";
     }
-    async showWaiting(){
-        this.ctx.body=this.service.sync.showWaiting()
+    async showWaiting(taskId){
+        this.ctx.body=await this.service.sync.showWaiting(taskId)
     }
 }
 

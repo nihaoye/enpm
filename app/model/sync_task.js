@@ -43,6 +43,11 @@ module.exports = app => {
             allowNull: false,
             comment: '同步状态,0:未同步|1:同步中|2:同步成功|3:同步失败|4:已忽略',
             defaultValue:0,
+        },
+        trace_id:{
+            type:INTEGER,
+            allowNull: true,
+            comment: '追踪id，可以根据这个查到是哪个包创建的任务',
         }
     }, {
         tableName: 'sync_task',
