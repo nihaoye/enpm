@@ -2,6 +2,11 @@
 module.exports = app => {
     const {STRING,TEXT} =app.Sequelize;
     const ModuleKeyword=app.model.define('ModuleKeyword', {
+        id:{
+            type:STRING(32),
+            defaultValue:app.Sequelize.UUIDV4,
+            primaryKey: true
+        },
         keyword: {
             type:STRING(100),
             allowNull: false,

@@ -13,7 +13,7 @@ module.exports = appInfo => {
     config.customLogger={
         syncLogger: {
             file: path.join(appInfo.root, 'logs/enpm/sync.log'),
-        },
+        }
     };
     config.sequelize = {
         dialect: 'sqlite', // support: mysql, mariadb, postgres, mssql

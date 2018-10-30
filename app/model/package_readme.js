@@ -1,6 +1,11 @@
 module.exports = app => {
     const {STRING, TEXT} = app.Sequelize;
     const PackageReadme=app.model.define('PackageReadme', {
+        id:{
+            type:STRING(32),
+            defaultValue:app.Sequelize.UUIDV4,
+            primaryKey: true
+        },
         name: {
             type:STRING(100),
             allowNull: false,

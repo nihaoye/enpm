@@ -1,8 +1,8 @@
 'use strict';
-
+const path=require('path');
 // had enabled by egg
 // exports.static = true;
 module.exports.sequelize = {
     enable: true,
-    package: 'egg-sequelize'
-}
+    path :path.resolve(process.cwd(),"plugins/egg-sequelize")
+};

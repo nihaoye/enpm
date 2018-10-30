@@ -2,6 +2,11 @@
 module.exports = app => {
     const {STRING, INTEGER, DATE,TEXT, BIGINT} = app.Sequelize;
     const ModuleAbbreviated = app.model.define('ModuleAbbreviated', {
+        id:{
+            type:STRING(32),
+            defaultValue:app.Sequelize.UUIDV4,
+            primaryKey: true
+        },
         name: {
             type:STRING(100),
             allowNull: false,

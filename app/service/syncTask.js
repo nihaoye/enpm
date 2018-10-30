@@ -27,9 +27,6 @@ class SyncTaskService extends Service {
         const syncTask=this.app.model.SyncTask;
         version=version||"latest";
         sync_type=sync_type||'pkg';
-        if(sync_type==='pkg'){
-            taskId=taskId||util.randomString(16);
-        }
         let result=null;
         if(version!=='latest'){
             result=await syncTask.findOne({where:{taskId:taskId,name:name,version:version}});//根据taskIdname和version查有没有存在的任务了，如果存在了就不需要创建了
@@ -74,7 +71,7 @@ class SyncTaskService extends Service {
      */
     async findOneNoSTask(taskId){
         const syncTask=this.app.model.SyncTask;
-        return await syncTask.findOne({where:{taskId:taskId,state:0},order:[['id','ASC']]})
+        return await syncTask.findOne({where:{taskId:taskId,state:0},order:[['gmt_create','ASC']]})
     }
     async listTask(taskId){
         return await this.app.model.SyncTask.findAll({where:{taskId:taskId}});

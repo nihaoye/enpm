@@ -2,6 +2,11 @@ const utility = require("utility");
 module.exports = app => {
     const {STRING,TEXT, BOOLEAN} = app.Sequelize;
     const User = app.model.define('User', {
+        id:{
+            type:STRING(32),
+            defaultValue:app.Sequelize.UUIDV4,
+            primaryKey: true
+        },
         name: {
             type: STRING(100),
             allowNull: false,

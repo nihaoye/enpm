@@ -2,7 +2,7 @@ const pkg=require("../package.json");
 const path=require("path");
 module.exports={
     version:pkg.version,
-    filePath:path.join("../",".enpm/nfs"),
+    filePath:path.join("./",".enpm/nfs"),
     httpProxy:null,
     sourceNpmRegistry:'https://registry.npm.taobao.org',
     officialNpmRegistry: 'https://registry.npmjs.com',

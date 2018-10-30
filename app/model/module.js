@@ -1,6 +1,11 @@
 module.exports = app => {
     const {STRING,INTEGER,TEXT,BIGINT} = app.Sequelize;
     const Module=app.model.define('Module', {
+        id:{
+            type:STRING(32),
+            defaultValue:app.Sequelize.UUIDV4,
+            primaryKey: true
+        },
         author: {
             type:STRING(100),
             allowNull: false,

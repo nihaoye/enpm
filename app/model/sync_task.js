@@ -1,10 +1,16 @@
 module.exports = app => {
     const {STRING,TEXT,INTEGER} = app.Sequelize;
     const SyncTask = app.model.define('SyncTask', {
+        id:{
+            type:STRING(32),
+            defaultValue:app.Sequelize.UUIDV4,
+            primaryKey: true
+        },
         taskId: {
             type: STRING(32),
             allowNull: false,
             comment: '任务的id',
+            defaultValue:app.Sequelize.UUIDV4,
         },
         sync_type:{
             type:STRING(8),

@@ -76,7 +76,7 @@ class SyncTaskController extends Controller {
             };
             setTimeout(async () => {
                 for (let i = 0; i < list.length; i++) {
-                    await this.service.sync.sync_worker(list[i].name, list[i].version);
+                    await this.service.sync.sync_worker(list[i]);
                 }
             })
 

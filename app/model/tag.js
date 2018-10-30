@@ -1,6 +1,11 @@
 module.exports = app => {
     const {STRING, BIGINT} = app.Sequelize;
     const Tag = app.model.define('Tag', {
+        id:{
+            type:STRING(32),
+            defaultValue:app.Sequelize.UUIDV4,
+            primaryKey: true
+        },
         name: {
             type:STRING(100),
             allowNull: false,

@@ -171,7 +171,6 @@ class SyncPackage extends Service{
             syncType=task.sync_type,
             syncDevDeps=task.sync_dev;
         var logger=this.app.getLogger("syncLogger");
-        taskId=taskId||utility.randomString(16);
         var logSign=`[${taskId}:${name}|${versionIndex}|${syncType}]`;
         logger.info(`${logSign}同步包开始`);
         let syncTask=this.service.syncTask;
@@ -310,10 +309,15 @@ class SyncPackage extends Service{
         })
     }
     async sync_worker(task){
+        const logger=this.app.getLogger("syncLogger");
         let name=task.name,
             versionIndex=task.version,
-            syncDevDeps=task.sync_dev;
-        const logger=this.app.getLogger("syncLogger");
+            syncDevDeps=task.sync_dev,
+            taskId=task.taskId;
+        if(!taskId){
+            logger.warn("没有taskId,不启动任务!");
+            return
+        }
         const syncTask=this.service.syncTask;
         versionIndex=versionIndex||"latest";
         if(!name)return;
