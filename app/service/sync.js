@@ -181,7 +181,7 @@ class SyncPackage extends Service{
         var devDeps=null;
         if(sourcePackage){
             logger.info(`${logSign}同步包结束(已存在符合版本的包,不需要同步)`);
-           await syncTask.updateTask(task.id,{state:2,result:"info:已存在符合版本的包，不需要同步"});
+           await syncTask.updateTask(task.id,{state:4,result:"info:已存在符合版本的包，不需要同步"});
             if(syncDevDeps){
                 devDeps=sourcePackage.package.devDependencies;
                 let arr=[];
