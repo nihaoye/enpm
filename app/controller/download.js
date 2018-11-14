@@ -5,7 +5,7 @@ const nfs=require('../utils/fs-cnpm')({
     dir: config.nfsPath
 });
 class DownloadController extends Controller {
-    async downPackage(){
+     downPackage(){
 /*        var name = this.params.name || this.params[0];
         var filename = this.params.filename || this.params[1];
         var version = filename.slice(name.length + 1, -4);

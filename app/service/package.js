@@ -451,5 +451,10 @@ class PackageService extends Service {
         }
         return data;
     };
+    async findByDate(startDate,endDate){
+        const Op=this.app.Sequelize.Op;
+        endDate=endDate||new Date();
+        return await this.app.model.Module.findAll({where:{gmt_create:{[Op.gte]:startDate,[Op.lte]:endDate}}})
+    }
 }
 module.exports = PackageService;

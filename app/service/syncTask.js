@@ -76,5 +76,15 @@ class SyncTaskService extends Service {
     async listTask(taskId){
         return await this.app.model.SyncTask.findAll({where:{taskId:taskId}});
     }
+    /**
+     * 开启未完成的任务
+     */
+    async startNosTasks(){
+        let tasks=await this.app.model.SyncTask.findAll({where:{state:0},order:[['gmt_create','ASC']]});
+        for(let i=0;i<tasks.length;i++){
+            await this.service.sync.sync_worker(tasks[i])
+        }
+        return "success"
+    }
 }
 module.exports=SyncTaskService;

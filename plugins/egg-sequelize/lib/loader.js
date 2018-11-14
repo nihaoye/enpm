@@ -16,7 +16,7 @@ module.exports = app => {
         if(args[0].indexOf('db_history')===-1){
           try{
               app.model.DbHistory.create({
-                  sqlstr:args[0]
+                  sqlstr:args[0].replace('Executed (default):','')
               })
           }catch(e){
             app.logger.error("数据库记录更新失败:"+args[0])

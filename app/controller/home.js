@@ -1,10 +1,10 @@
 'use strict';
 
 const Controller = require('egg').Controller;
-
+const fse=require("fs-extra")
 class HomeController extends Controller {
-  async index() {
-    this.ctx.body ="hi,enpm";
+  index() {
+    this.ctx.body =fse.readFileSync('app/public/index.html','utf8');
   }
 }
 

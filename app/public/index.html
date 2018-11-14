@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>enpm</title>
+    <link rel="stylesheet" href="public/css/bootstrap.min.css">
+    
+    <style>
+        body{
+            font-family:"微软雅黑"
+        }
+    </style>
+</head>
+<body>
+    <h4 class="text-center" style="padding-top:20px;margin-bottom:30px;">cnpm同步系统</h4>
+    <div class="container">
+        <div class="row">
+            <div class="col-9">
+                <h5 class="text-info">同步申请表单</h5>
+                <hr/>
+                <div>
+                        <form>
+                            <div class="form-group">
+                                <label for="name">名称</label> <small class="text-danger">*</small>
+                                <input class="form-control" id="name" placeholder="请输入名称">
+                            </div>
+                            <div class="form-group">
+                                <label for="version">版本号</label> <small class="text-danger small">(不知道什么版本可以不填)</small>
+                                <input class="form-control" id="version" placeholder="请输入版本号">
+                            </div>
+                            <div class="form-group">
+                                <label for="description">简述</label> <small class="text-danger small">(可不填)</small>
+                                <textarea class="form-control" id="description" placeholder="简述"></textarea>
+                            </div>
+                            <div class="form-check form-group">
+                                <input type="checkbox" class="form-check-input" id="sync_dev">
+                                <label class="form-check-label" for="sync_dev">同步开发依赖</label> <small class="text-danger small">(**不知道什么作用，不要勾选!**)</small>
+                            </div>
+                            <div class="form-group">
+                               <button id="sub" type="button" class="btn btn-danger">提交</button>
+                            </div>
+                        </form>
+                </div>
+            </div>
+            <div class="col">
+                <div class="alert alert-danger" style="margin-bottom:5px;">待同步列表...</div>
+                    <ul class="list-group" id="taskList">
+                    </ul>
+            </div>
+        </div>
+    </div>
+    <script src="public/js/jquery.min.js"></script>
+    <script src="public/js/bootstrap.min.js"></script>
+    <script src="public/js/layer/layer.js"></script>
+    <script>
+        listTasks();
+        function listTasks(){
+            $.ajax({
+                url:'package/listWaitTasks',
+                dataType:'json',
+                success:function(data){
+                    var str="";
+                    if(!data||data.length==0){
+                        str='<div class="text-center">暂无数据</div>'
+                    }else{
+                        for(var i=0;i<data.length;i++){
+                            var sync_devStr=data[i].sync_dev?' <span class="badge badge-dark">dev</span>':"";
+                            str+='<li class="list-group-item d-flex justify-content-between align-items-center" title="'+data[i].description+'"><span>'+data[i].name+'</span><span><span class="badge badge-success">'+(data[i].version=="latest"?data[i].version:"v"+data[i].version)+'</span> '+sync_devStr+'</span></li>'
+                        }
+                    }
+                    $("#taskList").html(str);
+                }
+            })
+        }
+        $('#sub').click(function(){
+            sub();
+        })
+        var subLock=false;
+        function sub(){
+            if(subLock){
+                return;
+            }
+            subLock=true;
+            var params={
+                name:$("#name").val(),
+                version:$("#version").val(),
+                description:$("#description").val(),
+                sync_dev:$("#sync_dev:checked").length==0?0:1
+            }
+            $.ajax({
+                url:'package/task/add',
+                dataType:'json',
+                data:params,
+                type:"post",
+                success:function(data){
+                    if(data.code===0){
+                        subLock=true;
+                        layer.msg(data.msg);
+                    }else if(data.code===1){
+                        layer.msg(data.msg);
+                        setTimeout(function(){
+                            window.location.href=window.location.href;
+                        },1500)
+                    }
+                }
+            })
+        }
+    </script>
+</body>
+</html>

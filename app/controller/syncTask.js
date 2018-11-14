@@ -16,7 +16,7 @@ class SyncTaskController extends Controller {
             return;
         }
         let result = await this.service.syncTask.addTask(params);
-        if (result == 0) {
+        if (!result) {
             this.ctx.body = {msg:"该任务已存在，不需要更新",error:1};
         } else {
             this.ctx.body = result;
@@ -27,7 +27,6 @@ class SyncTaskController extends Controller {
         let params = this.ctx.params;
         if(!params.version||params.version==="latest"){//如果更新最新版本的话就强制直接更新，不用检查任务是否重复
             let pkg=await this.service.sync.requestLatestPackage(params.name);
-            console.log(pkg);
             let sourcePackage=await this.service.package.getModuleByRange(pkg.name,pkg.version);
             if(sourcePackage){
                 this.ctx.body={msg:"已存在的最新版本:"+pkg.version+"，不需要更新",error:1};

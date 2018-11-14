@@ -1,11 +1,20 @@
 'use strict';
 const path = require("path");
+const commonConfig=require('./common');
 module.exports = appInfo => {
     const config = exports = {};
-
+    config.resourcePath=commonConfig.resourcePath;
+    config.isInternet=commonConfig.isInternet;
     // use for cookie sign key, should change to your own and keep security
     config.keys = appInfo.name + '_1536199081447_3693';
-
+    config.security = {
+        xframe: {
+          enable: false,
+        },
+        csrf: {
+            ignore:/.*/g,
+        },
+    }
     // add your config here
     config.middleware = [];
 
@@ -18,7 +27,7 @@ module.exports = appInfo => {
     config.sequelize = {
         dialect: 'sqlite', // support: mysql, mariadb, postgres, mssql
         database: 'test',
-        storage: path.join(appInfo.root,'.enpm/data.sqlite'),
+        storage: path.join(config.resourcePath,'data.sqlite'),
         // delegate: 'myModel', // load all models to `app[delegate]` and `ctx[delegate]`, default to `model`
         // baseDir: 'my_model', // load all files in `app/${baseDir}` as models, default to `model`
         // exclude: 'index.js', // ignore `app/${baseDir}/index.js` when load models, support glob and array

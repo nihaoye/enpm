@@ -195,7 +195,7 @@ class SyncPackage extends Service{
                 }
                 await Promise.all(arr);
             }
-            ee.emit("next"+task.taskId,task);
+            ee.emit("next"+task.taskId,task,4);
             return task;
         }
         var url="/"+name.replace('/', '%2f');
@@ -205,13 +205,13 @@ class SyncPackage extends Service{
         }catch(e){
             logger.warn(`${logSign}同步包失败(请求包失败,可能网络超时`+'\n'+JSON.stringify(e));
             await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败(请求包失败,可能网络超时)"});
-            ee.emit("next"+task.taskId,task);
+            ee.emit("next"+task.taskId,task,3);
             return task;
         }
         if(res.status!=200){
             logger.warn(`${logSign}同步包失败(请求包失败,网络状态码为:${res.status}`+"\n"+JSON.stringify(res.data));
             await syncTask.updateTask(task.id,{state:3,result:"error:请求包失败,网络状态码为:"+res.status});
-            ee.emit("next"+task.taskId,task);
+            ee.emit("next"+task.taskId,task,3);
             //throw new Error(res.data||"同步包失败!");
             return task;
         }
@@ -220,7 +220,7 @@ class SyncPackage extends Service{
         if(!semver.validRange(versionIndex)){
             logger.warn(`${logSign}同步包失败(版本校验错误,不同步该版本)`);
             await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败(版本校验错误)"});
-            ee.emit("next"+task.taskId,task);
+            ee.emit("next"+task.taskId,task,3);
             return task;
         }
         let latestversion=semver.maxSatisfying(versions,versionIndex);
@@ -232,7 +232,7 @@ class SyncPackage extends Service{
             }
             logger.warn(`${logSign}同步包失败${errorStr}`);
             await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败("+errorStr+")"});
-            ee.emit("next"+task.taskId,task);
+            ee.emit("next"+task.taskId,task,3);
             return task;
         }
         deps=sourcePackage.dependencies;
@@ -297,13 +297,13 @@ class SyncPackage extends Service{
                 logger.info(`${logSign}同步包成功`);
                 await syncTask.updateTask(task.id,{state: 2});
                 await t.commit();
-                ee.emit("next"+task.taskId,task);
+                ee.emit("next"+task.taskId,task,2);
                 return task;
             }catch(e){
                 await t.rollback();
                 logger.warn(`${logSign}同步包失败,可能回滚数据库`+"\n"+JSON.stringify(e));
                 await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败,可能回滚数据库,详情可查看服务器包同步日志"});
-                ee.emit("next"+task.taskId, task);
+                ee.emit("next"+task.taskId, task,3);
                 return task;
             }
         })
@@ -319,21 +319,24 @@ class SyncPackage extends Service{
             return
         }
         const syncTask=this.service.syncTask;
-        versionIndex=versionIndex||"latest";
         if(!name)return;
         logger.warn("---------------[执行同步包任务开始:"+task.taskId+"]"+(syncDevDeps?"[并同步该包的开发依赖包]":"")+name+":"+versionIndex+" -------------------------");
+        let totalResult = await this.service.total.getTotalInfo();
+        let totalService=this.calcTotalService(totalResult);
         this.sync(task);
         return new Promise(resolve => {
-            ee.on("next"+task.taskId,async (obj)=>{
+            ee.on("next"+task.taskId,async (obj,state)=>{
+                totalService.update(obj,state);
                 //taskCount-=1;
                 let task2 = await syncTask.findOneNoSTask(obj.taskId);
                 if(!task2){
                     logger.warn("---------------[同步结束:"+task.taskId+"]------------------");
+                    await totalService.stop()
                     ee.off("next"+task.taskId);
                     resolve(task);
                     return obj;
                 }
-                this.sync(task2)
+                this.sync(task2);
                 /*let num=max_task_num-taskCount;//需要启动的任务数
                 if(num>waitingSyncPackages.length-1){
                     num=waitingSyncPackages.length-1;
@@ -361,6 +364,26 @@ class SyncPackage extends Service{
         let latestversion=semver.maxSatisfying(versions,"*");
         let sourcePackage=pkg.versions[latestversion];
         return sourcePackage;
+    }
+    calcTotalService(total){
+        let totalService=this.service.total;
+        return {
+            update:function(task,state){
+                if(state==2){
+                    total.success_sync_num+=1;
+                    total.last_sync_module=task.name;
+                }else if(state==3){
+                    total.fail_sync_num+=1;
+                }
+            },
+            total:total,
+            stop:async function(){
+                total.last_sync_time=Date.now();
+                total.last_exist_sync_time=Date.now();
+                total.sync_status=1;
+                return await total.save();
+            }
+        }
     }
 }
 module.exports=SyncPackage;

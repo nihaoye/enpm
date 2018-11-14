@@ -10,8 +10,7 @@ module.exports = app => {
             type:TEXT('long'),
             allowNull:true,
             comment:"sql语句",
-        },
-        updatedAt: false,
+        }
     }, {
         tableName: 'db_history',
         comment: '数据库增量同步数据记录',
