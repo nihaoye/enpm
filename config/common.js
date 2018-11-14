@@ -1,10 +1,9 @@
 const pkg=require("../package.json");
 const path=require("path");
-const resourcePath=path.resolve(process.cwd(),'.enpm');
+const resourcePath=path.join(process.cwd(),'.enpm');
 module.exports={
     resourcePath:resourcePath,
     version:pkg.version,
-    filePath:path.join(resourcePath,"nfs"),
     httpProxy:null,
     sourceNpmRegistry:'https://registry.npm.taobao.org',
     officialNpmRegistry: 'https://registry.npmjs.com',
@@ -15,7 +14,8 @@ module.exports={
     admins: {
         admin: 'admin@cnpmjs.org',
     },
+    port:7011,
     scopes: [ '@enpm'],
     nfsPath:path.join(resourcePath,"nfs"),
-    isInternet:0
+    isInternet:1
 };

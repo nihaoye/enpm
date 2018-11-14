@@ -10,16 +10,43 @@ class SyncTaskController extends Controller {
         }
     }
     async addTask() {
-        let params = this.ctx.query;
+        let params = this.ctx.request.body;
         if (!params.name) {
-            this.ctx.body = {msg:"请输入需要更新的包名",error:1};
+            this.ctx.body = {msg:"请输入需要更新的包名",code:0};
+            return;
+        }
+        params.version=params.version||'latest';
+        if(params.version!=='latest'){
+            if(!semver.validRange(params.version)){
+                this.ctx.body={
+                    code:0,
+                    msg:"版本号填写错误"
+                }
+                return;
+            }
+        }else{
+            let pkg=await this.service.sync.requestLatestPackage(params.name);
+            if(!pkg){
+                this.ctx.body={
+                    code:0,
+                    msg:'npm包不存在'
+                }
+                return;
+            }
+            params.version=pkg.version;
+        }
+        if(await this.ctx.app.model.SyncTask.findOne({where:{name:params.name,version:params.version}})){
+            this.ctx.body={
+                code:0,
+                msg:"存在重复任务，不需要创建"
+            }
             return;
         }
         let result = await this.service.syncTask.addTask(params);
         if (!result) {
-            this.ctx.body = {msg:"该任务已存在，不需要更新",error:1};
+            this.ctx.body = {msg:"该任务已存在，不需要更新",code:0};
         } else {
-            this.ctx.body = result;
+            this.ctx.body = {msg:"提交成功",code:1};
         }
     }
     async startTaskByNameVersion() {
@@ -67,11 +94,15 @@ class SyncTaskController extends Controller {
         }
     }
     async startNoSTasks() {
+        if(global.syncTaskCount>0){
+            this.ctx.body={code:0,msg:"有正在同步的任务,请稍后重试!"};
+            return;
+        }
         let list = await this.service.syncTask.listNoSTask();
         if (list) {
             this.ctx.body = {
+                code:1,
                 message: "开启需要执行的任务",
-                data: list
             };
             setTimeout(async () => {
                 for (let i = 0; i < list.length; i++) {
@@ -80,11 +111,25 @@ class SyncTaskController extends Controller {
             })
 
         } else {
-            this.ctx.body = {msg: "没有需要开启的任务", data: null}
+            this.ctx.body = {code:0,msg: "没有需要开启的任务"}
         }
     }
     async listTask(){
-         this.ctx.body=await this.service.syncTask.listTask(this.ctx.params.taskId)
+        var params=this.ctx.params;
+        this.ctx.body=await this.service.syncTask.listTask(params)
+    }
+    async delTask(){
+        let id=this.ctx.request.body.id;
+        if(!id){
+            this.ctx.body={msg:"没有传入id",code:0}
+            return false;
+        }
+        let result=await this.service.syncTask.delTask(id);
+        if(result){
+            this.ctx.body={msg:"删除成功",code:1}
+        }else{
+            this.ctx.body={msg:"删除失败",code:0}
+        }
     }
 }
 

@@ -73,8 +73,8 @@ class SyncTaskService extends Service {
         const syncTask=this.app.model.SyncTask;
         return await syncTask.findOne({where:{taskId:taskId,state:0},order:[['gmt_create','ASC']]})
     }
-    async listTask(taskId){
-        return await this.app.model.SyncTask.findAll({where:{taskId:taskId}});
+    async listTask(params){
+        return await this.app.model.SyncTask.findAll({where:params,order:[['gmt_create','DESC']]});
     }
     /**
      * 开启未完成的任务
@@ -85,6 +85,13 @@ class SyncTaskService extends Service {
             await this.service.sync.sync_worker(tasks[i])
         }
         return "success"
+    }
+    async delTask(id){
+        if(!id){
+            return;
+        }
+        await this.app.model.SyncTask.destroy({where:{id:id}});
+        return true;
     }
 }
 module.exports=SyncTaskService;

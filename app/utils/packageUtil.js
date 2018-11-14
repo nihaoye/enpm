@@ -44,7 +44,7 @@ class PackageUtil{
        let zipfile=this.app.config.resourcePath+"/sync_packages/tmp2"+"/sync_"+Date.now()+".zip"
        await msger.downloadFile(msg.file,zipfile);
        this.extractPackage(zipfile);
-       fse.moveSync(this.app.config.resourcePath+'/sync_packages/tmp2/nfs',this.app.config.resourcePath+"/nfs");
+       fse.moveSync(this.app.config.resourcePath+'/sync_packages/tmp2/nfs',this.app.config.nsfPath);
        let dbhis=await fse.readJson(this.app.config.resourcePath+'/sync_packages/tmp2'+"/db_history.json");
        console.log("开始写入sql");
        for(let item of dbhis){

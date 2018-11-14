@@ -323,9 +323,12 @@ class SyncPackage extends Service{
         logger.warn("---------------[执行同步包任务开始:"+task.taskId+"]"+(syncDevDeps?"[并同步该包的开发依赖包]":"")+name+":"+versionIndex+" -------------------------");
         let totalResult = await this.service.total.getTotalInfo();
         let totalService=this.calcTotalService(totalResult);
+        global.syncTaskCount=global.syncTaskCount||0;
+        global.syncTaskCount+=1;
         this.sync(task);
         return new Promise(resolve => {
             ee.on("next"+task.taskId,async (obj,state)=>{
+                global.syncTaskCount<=0?(global.syncTaskCount-=1):0
                 totalService.update(obj,state);
                 //taskCount-=1;
                 let task2 = await syncTask.findOneNoSTask(obj.taskId);
@@ -336,6 +339,8 @@ class SyncPackage extends Service{
                     resolve(task);
                     return obj;
                 }
+                global.syncTaskCount=global.syncTaskCount||0;
+                global.syncTaskCount+=1;
                 this.sync(task2);
                 /*let num=max_task_num-taskCount;//需要启动的任务数
                 if(num>waitingSyncPackages.length-1){

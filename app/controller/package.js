@@ -65,6 +65,7 @@ class PackageController extends Controller {
                     code:0,
                     msg:"版本号填写错误"
                 }
+                return;
             }
         }
         let result=null;
@@ -107,6 +108,7 @@ class PackageController extends Controller {
         };
     }
     listWaitTasks(){
+        fse.ensureFileSync(this.ctx.app.config.resourcePath+'/sync_packages/syncMsg.json')
         let json=fse.readFileSync(this.ctx.app.config.resourcePath+'/sync_packages/syncMsg.json','utf8');
         json=json?JSON.parse(json):[];
         this.ctx.body=json;

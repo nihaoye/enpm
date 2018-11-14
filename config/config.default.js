@@ -15,6 +15,13 @@ module.exports = appInfo => {
             ignore:/.*/g,
         },
     }
+    config.cluster = {
+        listen: {
+          path: '',
+          port: commonConfig.port||7001,
+          hostname: '',
+        },
+      };
     // add your config here
     config.middleware = [];
 
