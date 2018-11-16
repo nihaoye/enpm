@@ -27,10 +27,8 @@ class SyncTaskService extends Service {
         const syncTask=this.app.model.SyncTask;
         version=version||"latest";
         sync_type=sync_type||'pkg';
-        let result=null;
-        if(version!=='latest'){
-            result=await syncTask.findOne({where:{taskId:taskId,name:name,version:version}});//根据taskIdname和version查有没有存在的任务了，如果存在了就不需要创建了
-        }
+        let result = null;
+        result=await syncTask.findOne({where:{taskId:taskId,name:name,version:version}});//根据taskIdname和version查有没有存在的任务了，如果存在了就不需要创建了
         if(result){
             result=await syncTask.create({
                 taskId:taskId,

@@ -5,7 +5,7 @@ class BuildSyncMsg extends Subscription {
   static get schedule() {
     return {
         // 每周五下午4点
-        cron: '0 0 16 * * 5',
+        cron: '0 0 16 ? * 5',
         type:'worker'
       };
   }

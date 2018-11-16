@@ -175,7 +175,9 @@ class SyncPackage extends Service{
         logger.info(`${logSign}同步包开始`);
         let syncTask=this.service.syncTask;
         var sourcePackage=null;
-        sourcePackage=await this.service.package.getModuleByRange(name,versionIndex);
+        if(versionIndex!=='latest'){
+            sourcePackage=await this.service.package.getModuleByRange(name,versionIndex);
+        }
         var deps=null;
         var devDeps=null;
         if(sourcePackage){
@@ -217,13 +219,18 @@ class SyncPackage extends Service{
         }
         var pkg=res.data;
         var versions=Object.keys(pkg.versions);
-        if(!semver.validRange(versionIndex)){
-            logger.warn(`${logSign}同步包失败(版本校验错误,不同步该版本)`);
-            await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败(版本校验错误)"});
-            ee.emit("next"+task.taskId,task,3);
-            return task;
-        }
-        let latestversion=semver.maxSatisfying(versions,versionIndex);
+        let latestversion=null
+        if(versionIndex!=='latest'){
+            if(!semver.validRange(versionIndex)){
+                logger.warn(`${logSign}同步包失败(版本校验错误,不同步该版本)`);
+                await syncTask.updateTask(task.id,{state:3,result:"error:同步包失败(版本校验错误)"});
+                ee.emit("next"+task.taskId,task,3);
+                return task;
+            }
+            latestversion=semver.maxSatisfying(versions,versionIndex);
+        }else{
+            latestversion=semver.maxSatisfying(versions,"*");
+        }    
         sourcePackage=pkg.versions[latestversion];
         if(!latestversion){
             let errorStr="没有符合版本的包";
@@ -266,7 +273,7 @@ class SyncPackage extends Service{
         return await this.app.model.transaction().then(async (t)=>{
             try {
                 //同步包
-                await this.syncPackage(versionIndex, sourcePackage);
+                await this.syncPackage(latestversion, sourcePackage);
                 //同步readme
                 await this.service.package.savePackageReadme(name, pkg.readme, latestversion);
                 for (let user of sourcePackage.maintainers) {
@@ -328,7 +335,7 @@ class SyncPackage extends Service{
         this.sync(task);
         return new Promise(resolve => {
             ee.on("next"+task.taskId,async (obj,state)=>{
-                global.syncTaskCount<=0?(global.syncTaskCount-=1):0
+                global.syncTaskCount<=0?(global.syncTaskCount-=1):0;
                 totalService.update(obj,state);
                 //taskCount-=1;
                 let task2 = await syncTask.findOneNoSTask(obj.taskId);

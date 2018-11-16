@@ -86,7 +86,7 @@ class PackageController extends Controller {
            return 2;//忽略 
         }
         if(params.version!=='latest'){
-            result=await this.app.model.SyncTask.findOne({where:{name:params.name.trim(),version:params.version,sync_dev:params.sync_dev?1:0}})
+            result=await this.app.model.SyncTask.findOne({where:{name:params.name.trim(),version:params.version,sync_dev:params.sync_dev==1?1:0}})
         }
         if(result){
             this.ctx.body={
@@ -98,7 +98,7 @@ class PackageController extends Controller {
         syncMsg.push({
             name:params.name,
             version:params.version||"latest",
-            sync_dev:params.sync_dev?1:0,
+            sync_dev:params.sync_dev==1?1:0,
             description:"[内网申请]"+(params.description||"")
         })
         fse.writeJSONSync(this.app.config.resourcePath+'/sync_packages/syncMsg.json',syncMsg);

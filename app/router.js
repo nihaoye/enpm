@@ -22,7 +22,7 @@ module.exports = app => {
   }else{//外网环境配置路由
     router.post("/task/delete",controller.syncTask.delTask);
     router.post("/task/add",controller.syncTask.addTask);
-    router.get("/task/startNoSTasks",controller.syncTask.startNoSTasks);
+    router.post("/task/startNoSTasks",controller.syncTask.startNoSTasks);
     router.get("/tasks",controller.syncTask.listTask);
   }
 };

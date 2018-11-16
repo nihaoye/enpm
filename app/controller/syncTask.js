@@ -63,7 +63,7 @@ class SyncTaskController extends Controller {
             let task=await this.service.syncTask.addTask({
                 name:pkg.name,
                 version:pkg.version,
-                sync_dev:this.ctx.query.syncDev?1:0,
+                sync_dev:this.ctx.query.syncDev==1?1:0,
             });
             this.service.sync.sync_worker(task);
             this.sendTaskMsg(task,"开启同步任务...");
@@ -73,7 +73,7 @@ class SyncTaskController extends Controller {
             this.ctx.body={msg:"版本校验错误!",error:1};
             return;
         }
-        let item = await this.app.model.SyncTask.findOne({where: {name: params.name,version: params.version,state:{[Op.or]:[0,1,2]},sync_dev:this.ctx.query.syncDev?1:0}});
+        let item = await this.app.model.SyncTask.findOne({where: {name: params.name,version: params.version,state:{[Op.or]:[0,1,2]},sync_dev:this.ctx.query.syncDev==1?1:0}});
         if (item) {
             if (item.state == 2) {
                 this.sendTaskMsg(item,"存在相同的重复任务,不需要同步");
@@ -87,7 +87,7 @@ class SyncTaskController extends Controller {
             let task=await this.service.syncTask.addTask({
                 name:params.name,
                 version:params.version||"latest",
-                sync_dev:this.ctx.query.syncDev?1:0,
+                sync_dev:this.ctx.query.syncDev==1?1:0,
             });
             this.service.sync.sync_worker(task);
             this.sendTaskMsg(task,"开启同步任务...");
@@ -98,11 +98,11 @@ class SyncTaskController extends Controller {
             this.ctx.body={code:0,msg:"有正在同步的任务,请稍后重试!"};
             return;
         }
-        let list = await this.service.syncTask.listNoSTask();
-        if (list) {
+        let list = await this.service.syncTask.listTask({state:0});
+        if (list&&list.length>0) {
             this.ctx.body = {
                 code:1,
-                message: "开启需要执行的任务",
+                msg: "开启需要执行的任务",
             };
             setTimeout(async () => {
                 for (let i = 0; i < list.length; i++) {
@@ -115,7 +115,7 @@ class SyncTaskController extends Controller {
         }
     }
     async listTask(){
-        var params=this.ctx.params;
+        var params=this.ctx.query;
         this.ctx.body=await this.service.syncTask.listTask(params)
     }
     async delTask(){

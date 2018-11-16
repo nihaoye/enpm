@@ -22,7 +22,7 @@ module.exports = app => {
             comment: 'module version',
         },
         module_id: {
-            type:BIGINT(20),
+            type:STRING(32),
             allowNull: false,
             comment: 'module id'
         }

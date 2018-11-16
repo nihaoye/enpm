@@ -32,8 +32,12 @@ module.exports = appInfo => {
         }
     };
     config.sequelize = {
-        dialect: 'sqlite', // support: mysql, mariadb, postgres, mssql
-        database: 'test',
+        host:"localhost",
+        port:"3306",
+        username:"root",
+        password:"root",
+        dialect: 'mysql', // support: mysql, mariadb, postgres, mssql
+        database: 'enpm',
         storage: path.join(config.resourcePath,'data.sqlite'),
         // delegate: 'myModel', // load all models to `app[delegate]` and `ctx[delegate]`, default to `model`
         // baseDir: 'my_model', // load all files in `app/${baseDir}` as models, default to `model`
