@@ -12,14 +12,14 @@ module.exports = app => {
    router.get("/listTask/:taskId",controller.syncTask.listTask);
   // router.get("/task/startNoSTasks",controller.syncTask.startNoSTasks);
 
-  // router.get('/package/buildAndSendPackage',controller.package.buildAndSendPackage);
-  // router.get('/package/recieveAndSavePackage',controller.package.recieveAndSavePackage);
-  // router.get('/package/buildAndSendSyncMsg',controller.package.buildAndSendSyncMsg);
-  // router.get('/package/recieveSyncMsg',controller.package.recieveSyncMsg);
-  if(app.config.isInternet==0){//内网环境配置的路由
+  if(!app.config.isInternet){//内网环境配置的路由
     router.post('/package/task/add',controller.package.addTask);
-    router.get('/package/listWaitTasks',controller.package.listWaitTasks)
+    router.get('/package/listWaitTasks',controller.package.listWaitTasks);
+    router.post('/package/buildAndSendSyncMsg',controller.package.buildAndSendSyncMsg);
+    router.post('/package/recieveAndSavePackage',controller.package.recieveAndSavePackage);
   }else{//外网环境配置路由
+    router.post('/package/buildAndSendPackage',controller.package.buildAndSendPackage);
+    router.post('/package/recieveSyncMsg',controller.package.recieveSyncMsg);
     router.post("/task/delete",controller.syncTask.delTask);
     router.post("/task/add",controller.syncTask.addTask);
     router.post("/task/startNoSTasks",controller.syncTask.startNoSTasks);

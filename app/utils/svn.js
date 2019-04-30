@@ -3,8 +3,10 @@ const svnConfig = require('../../config/svn')
 function checkout(){
     return new Promise((resolve,reject)=>{
         svnUltimate.commands.checkout(svnConfig.registry, svnConfig.cwd, function( err ) {
+            if(!err){
+                console.log( "Checkout complete" );
+            }
             resolve(err)
-            console.log( "Checkout complete" );
         } );
     })
 }
@@ -20,7 +22,9 @@ function update(){
                 force: true,			// provide --force to commands that accept it
             },
             function( err ) {
-                console.log( "Update complete" );
+                if(!err){
+                    console.log( "Update complete" );
+                }
                 resolve(err)
             } );
     })
@@ -33,8 +37,11 @@ function commit(){
             password: svnConfig.password,	// same as --password
             shell: "sh", 			// override shell used to execute command
         },(err)=>{
-            console.log('commit success');
+            if(!err){
+                console.log('commit complete');
+            }
             resolve(err);
         });
     })
 }
+module.exports = {checkout,update,commit}

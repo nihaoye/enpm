@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="public/css/bootstrap.min.css">
     <style>
         body{
-            font-family:"微软雅黑"
+            font-family:"微软雅黑";
+            min-height:100vh;
         }
         #taskList li{
             position:relative;
@@ -26,6 +27,22 @@
         #taskList li:hover .close{
             opacity: 1;
             transition: opacity 0.5s;
+        }
+        .dangerOpt{
+            position:fixed;
+            z-index:999;
+            bottom:10px;
+            right:10px;
+            background:white;
+            padding:6px;
+            border-radius: 3px;
+        }
+        .footerTips{
+            margin-bottom:0;
+            position:absolute;
+            bottom:0;
+            left:0;
+            width:100%;
         }
     </style>
 </head>
@@ -69,11 +86,15 @@
             </div>
         </div>
     </div>
-    <div class="alert alert-primary" role="alert" style="font-size:13px;">
+    <div class="footerTips alert alert-primary" role="alert" style="font-size:13px;">
         <h6>注:</h6>
         <p>1. 系统会在<span class="text-danger">每周五下午4点</span>收集内网需要同步的npm包<small>(如果你是在这之后提交的申请，则需要等下个周五收集了)</small></p>
         <p>2. 系统会在<span class="text-danger">每周二下午6点前</span>更新上周收集的npm包<small>(按更新的npm包数量大小顺延或者提前)</small></p>
-        <p>3. 不要一周提交太多的npm包申请,如果一次增加好几千个npm包，估计到时要人工打包到内网了(目前压缩程序写的不好，支持不了太多的文件压缩)</p>
+        <p>3. 不要一周提交太多的npm包申请</p>
+    </div>
+    <div class="dangerOpt">
+        <button type="button" class="btn btn-danger btn-sm" onclick="buildPackage()">立即构建打包发送到内网</button>
+        <button type="button" class="btn btn-warning btn-sm" onclick="recieveMsg()">立即接收内网同步信息</button>
     </div>
     <script src="public/js/jquery.min.js"></script>
     <script src="public/js/bootstrap.min.js"></script>
@@ -166,6 +187,36 @@
                     }
                 }
             })
+        }
+        function buildPackage(){
+            layer.prompt({title: '谨慎操作，请输入口令！', formType: 1}, function(pass, index){
+                layer.close(index);
+                var params={accessToken:pass};
+                $.ajax({
+                    url:'package/buildAndSendPackage',
+                    dataType:'json',
+                    data:params,
+                    type:"post",
+                    success:function(data){
+                        layer.msg(data.msg);
+                    }
+                })
+            });
+        }
+        function recieveMsg(){
+            layer.prompt({title: '谨慎操作，请输入口令！', formType: 1}, function(pass, index){
+                layer.close(index);
+                var params={accessToken:pass};
+                $.ajax({
+                    url:'package/recieveSyncMsg',
+                    dataType:'json',
+                    data:params,
+                    type:"post",
+                    success:function(data){
+                        layer.msg(data.msg);
+                    }
+                })
+            });
         }
     </script>
 </body>

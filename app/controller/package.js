@@ -3,7 +3,8 @@
 const Controller = require('egg').Controller;
 const PackageUtil = require('../utils/packageUtil');
 const semver = require('semver')
-const fse=require('fs-extra')
+const fse=require('fs-extra');
+const accessToken = 'finest';
 class PackageController extends Controller {
     constructor(props){
         super(props);
@@ -12,28 +13,26 @@ class PackageController extends Controller {
             service:this.service
         });
     }
-    async buildAndSendPackage(){
-        if(await this.packageUtil.buildAndSendPackage()){
-            this.ctx.body="程序已经打包发送到内网!"
-        } else{
-            this.ctx.body="暂无更新信息，不需打包!"
+    async buildAndSendPackage(){//外网功能
+        if(this.ctx.request.body.accessToken !== accessToken){
+            this.ctx.body = {code:0,msg:'口令错误'};
+            return true;
         }
-    }
-    async recieveAndSavePackage(){
-        let status=await this.packageUtil.recieveAndSavePackage();
-        if(status==1){
-            this.ctx.body="程序接收包成功";
-        }else if(status==0){
-            this.ctx.body="程序接收包失败";
-        }else if(status==2){
-            this.ctx.body="接收的程序包已经同步过了，不需要同步";
+        var result = await this.packageUtil.buildAndSendPackage();
+        if(result === 1){
+            this.ctx.body={code:1,msg:"打包发送成功!"};
+        } else if(result ===2){
+            this.ctx.body={code:1,msg:"不需要打包!"};
+        }else{
+            this.ctx.body={code:0,msg:"打包发送失败!"};
         }
-        
+        return true;
     }
-    async buildAndSendSyncMsg(){
-        this.ctx.body=await this.packageUtil.buildAndSendSyncMsg()
-    }
-    async recieveSyncMsg(){
+    async recieveSyncMsg(){//外网功能
+        if(this.ctx.request.body.accessToken !== accessToken){
+            this.ctx.body = {code:0,msg:'口令错误'};
+            return true;
+        }
         let status=await this.packageUtil.recieveSyncMsg();
         if(!status){
             this.ctx.body={
@@ -48,6 +47,28 @@ class PackageController extends Controller {
         }else{
             this.ctx.body=status;
         }
+    }
+    async recieveAndSavePackage(){//内网功能
+        if(this.ctx.request.body.accessToken !== accessToken){
+            this.ctx.body = {code:0,msg:'口令错误'};
+            return true;
+        }
+        let status=await this.packageUtil.recieveAndSavePackage();
+        if(status==1){
+            this.ctx.body="接收包成功";
+        }else if(status==0){
+            this.ctx.body="接收包失败";
+        }else if(status==2){
+            this.ctx.body="不需要同步";
+        }
+        
+    }
+    async buildAndSendSyncMsg(){//内网功能
+        if(this.ctx.request.body.accessToken !== accessToken){
+            this.ctx.body = {code:0,msg:'口令错误'};
+            return true;
+        }
+        this.ctx.body=await this.packageUtil.buildAndSendSyncMsg()
     }
     async addTask(){ 
         let params=this.ctx.request.body;
