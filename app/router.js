@@ -15,7 +15,7 @@ module.exports = app => {
   if(!app.config.isInternet){//内网环境配置的路由
     router.post('/package/task/add',controller.package.addTask);
     router.get('/package/listWaitTasks',controller.package.listWaitTasks);
-    router.post('/package/buildAndSendSyncMsg',controller.package.buildAndSendSyncMsg);
+    router.post('/package/buildSyncMsg',controller.package.buildAndSendSyncMsg);
     router.post('/package/recieveAndSavePackage',controller.package.recieveAndSavePackage);
   }else{//外网环境配置路由
     router.post('/package/buildAndSendPackage',controller.package.buildAndSendPackage);

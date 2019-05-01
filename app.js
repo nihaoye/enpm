@@ -5,5 +5,6 @@ module.exports = app => {
     app.beforeStart(() => {
         console.log("************enpm启动**************")
         fse.ensureDirSync(commonConfig.resourcePath+"/sync_packages");
+        app.model.sync();
     })
 };

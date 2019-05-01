@@ -13,55 +13,29 @@ class PackageController extends Controller {
             service:this.service
         });
     }
+
     async buildAndSendPackage(){//外网功能
         if(this.ctx.request.body.accessToken !== accessToken){
             this.ctx.body = {code:0,msg:'口令错误'};
             return true;
         }
-        var result = await this.packageUtil.buildAndSendPackage();
-        if(result === 1){
-            this.ctx.body={code:1,msg:"打包发送成功!"};
-        } else if(result ===2){
-            this.ctx.body={code:1,msg:"不需要打包!"};
-        }else{
-            this.ctx.body={code:0,msg:"打包发送失败!"};
-        }
-        return true;
+        let result = await this.packageUtil.buildAndSendPackage();
+        this.ctx.body = result;
     }
     async recieveSyncMsg(){//外网功能
         if(this.ctx.request.body.accessToken !== accessToken){
             this.ctx.body = {code:0,msg:'口令错误'};
             return true;
         }
-        let status=await this.packageUtil.recieveSyncMsg();
-        if(!status){
-            this.ctx.body={
-                code:0,
-                msg:"更新失败"
-            }
-        }else if(status==2){
-            this.ctx.body={
-                code:1,
-                msg:"没有新的需要同步消息"
-            }
-        }else{
-            this.ctx.body=status;
-        }
+        let result=await this.packageUtil.recieveSyncMsg();
+        this.ctx.body = result;
     }
     async recieveAndSavePackage(){//内网功能
         if(this.ctx.request.body.accessToken !== accessToken){
             this.ctx.body = {code:0,msg:'口令错误'};
-            return true;
+            return false;
         }
-        let status=await this.packageUtil.recieveAndSavePackage();
-        if(status==1){
-            this.ctx.body="接收包成功";
-        }else if(status==0){
-            this.ctx.body="接收包失败";
-        }else if(status==2){
-            this.ctx.body="不需要同步";
-        }
-        
+        this.ctx.body = await this.packageUtil.recieveAndSavePackage();
     }
     async buildAndSendSyncMsg(){//内网功能
         if(this.ctx.request.body.accessToken !== accessToken){
@@ -70,7 +44,7 @@ class PackageController extends Controller {
         }
         this.ctx.body=await this.packageUtil.buildAndSendSyncMsg()
     }
-    async addTask(){ 
+    async addTask(){
         let params=this.ctx.request.body;
         if(!params.name){
             this.ctx.body={
@@ -104,7 +78,7 @@ class PackageController extends Controller {
                 code:0,
                 msg:"重复的申请"
             }
-           return 2;//忽略 
+           return 2;//忽略
         }
         if(params.version!=='latest'){
             result=await this.app.model.SyncTask.findOne({where:{name:params.name.trim(),version:params.version,sync_dev:params.sync_dev==1?1:0}})
@@ -114,7 +88,7 @@ class PackageController extends Controller {
                 code:0,
                 msg:"符合版本("+result.version+")的npm包已经存在,不需要更新"
             }
-           return 2;//忽略 
+           return 2;//忽略
         }
         syncMsg.push({
             name:params.name,
