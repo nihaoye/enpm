@@ -1,10 +1,11 @@
 
 const fse = require('fs-extra');
-const commonConfig = require('./config/common')
+const commonConfig = require('./config/common');
+const path = require('path');
 module.exports = app => {
     app.beforeStart(() => {
         console.log("************enpm启动**************")
-        fse.ensureDirSync(commonConfig.resourcePath+"/sync_packages");
-        app.model.sync();
+        fse.ensureDirSync(path.join(commonConfig.resourcePath,"tmp"));
+        //app.model.sync();
     })
 };

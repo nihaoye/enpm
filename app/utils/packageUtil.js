@@ -140,7 +140,7 @@ class PackageUtil{
             this.app.logger.info('存在没有同步完成的历史，请先同步再打包');
             return {code:0,msg:'存在没有同步完成的历史，请先同步再打包'};
         }
-        let his=await this.model.DbHistory.findOne({attributes: ['id','gmt_create'],order:[['gmt_create','ASC']]});
+        let his=await this.model.DbHistory.findOne({attributes: ['id','gmt_create'],order:[['id','ASC']]});
         if(!his){
             this.app.logger.info("没有需要的同步记录");
             return {code:2,msg:"没有需要的同步记录"};
@@ -153,7 +153,7 @@ class PackageUtil{
         return await fse.copy(sourcePath+"\\"+pkg.dist_tarball,targetPath+'\\tmp\\nfs'+"\\"+pkg.dist_tarball);
     }
     async dbHistoryBuild(){
-        let dbHis=await this.model.DbHistory.findAll({order:[['gmt_create','ASC']]});
+        let dbHis=await this.model.DbHistory.findAll({order:[['id','ASC']]});
         let hz = '';
         if(commonConfig.isInternet){
             hz = '_out'

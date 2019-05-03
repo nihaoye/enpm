@@ -30,7 +30,7 @@ module.exports = app => {
             comment: 'SyncTask name',
         },
         version: {
-            type: STRING(32),
+            type: STRING(100),
             allowNull: false,
             comment: 'SyncTask version',
         },
@@ -51,9 +51,10 @@ module.exports = app => {
             defaultValue:0,
         },
         trace_id:{
-            type:INTEGER,
+            type:STRING(32),
             allowNull: true,
             comment: '追踪id，可以根据这个查到是哪个包创建的任务',
+            defaultValue:''
         }
     }, {
         tableName: 'sync_task',

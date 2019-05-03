@@ -1,11 +1,6 @@
 module.exports = app => {
-    const {TEXT,STRING} = app.Sequelize;
+    const {TEXT} = app.Sequelize;
     const DbHistory = app.model.define('DbHistory', {
-        id:{
-            type:STRING(32),
-            defaultValue:app.Sequelize.UUIDV4,
-            primaryKey: true
-        },
         sqlstr:{
             type:TEXT('long'),
             allowNull:true,

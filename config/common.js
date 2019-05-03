@@ -17,5 +17,5 @@ module.exports={
     port:7011,
     scopes: [ '@enpm'],
     nfsPath:path.join(resourcePath,"nfs"),
-    isInternet:0
+    isInternet:1
 };

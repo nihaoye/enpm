@@ -11,7 +11,9 @@ module.exports = app => {
   // router.get("/sync/:name",controller.syncTask.startTaskByNameVersion);
    router.get("/listTask/:taskId",controller.syncTask.listTask);
   // router.get("/task/startNoSTasks",controller.syncTask.startNoSTasks);
-
+  router.get('/npmTool/chartDeps',controller.npmTool.chartDeps);
+  router.get('/npmTool/startCheckedModuleFile',controller.npmTool.startCheckedModuleFile);
+  router.get('/npmTool/checkedModuleFileCondition',controller.npmTool.checkedModuleFileCondition);
   if(!app.config.isInternet){//内网环境配置的路由
     router.post('/package/task/add',controller.package.addTask);
     router.get('/package/listWaitTasks',controller.package.listWaitTasks);
@@ -24,5 +26,6 @@ module.exports = app => {
     router.post("/task/add",controller.syncTask.addTask);
     router.post("/task/startNoSTasks",controller.syncTask.startNoSTasks);
     router.get("/tasks",controller.syncTask.listTask);
+    router.get("/task/syncTaskCount",controller.syncTask.getTaskCount);
   }
 };

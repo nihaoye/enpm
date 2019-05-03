@@ -94,7 +94,7 @@ class SyncTaskController extends Controller {
         }
     }
     async startNoSTasks() {
-        if(global.syncTaskCount>0){
+        if(global.isSync){
             this.ctx.body={code:0,msg:"有正在同步的任务,请稍后重试!"};
             return;
         }
@@ -130,6 +130,9 @@ class SyncTaskController extends Controller {
         }else{
             this.ctx.body={msg:"删除失败",code:0}
         }
+    }
+    async getTaskCount(){
+         this.ctx.body = {count:await this.app.model.SyncTask.count({where:{state:0}}),isSync:global.isSync};
     }
 }
 

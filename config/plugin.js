@@ -4,5 +4,9 @@ const path=require('path');
 // exports.static = true;
 module.exports.sequelize = {
     enable: true,
-    path :path.resolve(process.cwd(),"plugins/egg-sequelize")
+    path :path.resolve(process.cwd(),"plugins/egg-sequelize"),
 };
+module.exports.cors = {
+    enable: true,
+    package: 'egg-cors',
+}

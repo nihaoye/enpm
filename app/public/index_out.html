@@ -125,8 +125,11 @@
         }
         $('#sub').click(function(){
             sub();
-        })
+        });
         $('#syncStart').click(function(){
+            if($(this).attr('waiting')==='1'){
+                return;
+            }
             $.ajax({
                 url:'task/startNoSTasks',
                 type:'post',
@@ -218,6 +221,26 @@
                 })
             });
         }
+        var syncStartElm = document.getElementById('syncStart');
+        function getSyncTaskCount(){
+            $.ajax({
+                url:'task/syncTaskCount',
+                dataType:'json',
+                success:function(data){
+                    if(data.isSync){
+                        syncStartElm.innerHTML = '同步中...<span class="badge">'+(data.count||0)+'</span>';
+                        $(syncStartElm).attr('waiting','1');
+                    }else{
+                        syncStartElm.innerHTML = '立即同步';
+                        $(syncStartElm).attr('waiting','0');
+                    }
+                    setTimeout(function(){
+                        getSyncTaskCount();
+                    },2000)
+                }
+            })
+        }
+        getSyncTaskCount();
     </script>
 </body>
 </html>

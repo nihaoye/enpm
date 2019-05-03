@@ -11,6 +11,7 @@ const os = require('os');
 const nfs=require('../utils/fs-cnpm')({
     dir: config.nfsPath
 });
+global.isSync =false;
 const urllib=require("urllib");
 var USER_AGENT = 'sync.cnpmjs.org/' + config.version +
     ' hostname/' + os.hostname() +
@@ -230,7 +231,7 @@ class SyncPackage extends Service{
             latestversion=semver.maxSatisfying(versions,versionIndex);
         }else{
             latestversion=semver.maxSatisfying(versions,"*");
-        }    
+        }
         sourcePackage=pkg.versions[latestversion];
         if(!latestversion){
             let errorStr="没有符合版本的包";
@@ -332,16 +333,18 @@ class SyncPackage extends Service{
         let totalService=this.calcTotalService(totalResult);
         global.syncTaskCount=global.syncTaskCount||0;
         global.syncTaskCount+=1;
+        global.isSync = true;
         this.sync(task);
         return new Promise(resolve => {
             ee.on("next"+task.taskId,async (obj,state)=>{
-                global.syncTaskCount<=0?(global.syncTaskCount-=1):0;
+                global.syncTaskCount>0?(global.syncTaskCount-=1):(global.syncTaskCount =0);
                 totalService.update(obj,state);
                 //taskCount-=1;
                 let task2 = await syncTask.findOneNoSTask(obj.taskId);
                 if(!task2){
                     logger.warn("---------------[同步结束:"+task.taskId+"]------------------");
-                    await totalService.stop()
+                    await totalService.stop();
+                    global.isSync=false;
                     ee.off("next"+task.taskId);
                     resolve(task);
                     return obj;

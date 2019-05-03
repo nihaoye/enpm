@@ -4,7 +4,31 @@ const path = require('path');
 const sleep = require('mz-modules/sleep');
 const AUTH_RETRIES = Symbol('authenticateRetries');
 const reg=/(UDPATE|DELETE|INSERT)\s.+/g;
+const dbHisQueque = [];
+function his2Db(app){
+    if(dbHisQueque.length<=0){
+      setTimeout(()=>{
+          his2Db(app);
+      },1000);
+      return;
+    }
+    try{
+        app.model.DbHistory.create(dbHisQueque[0]).then((result)=>{
+            dbHisQueque.shift();
+            setTimeout(()=>{
+                his2Db(app);
+            },20)
+        });
+    }catch(e){
+        app.logger.error("数据库记录更新失败:");
+        app.logger.error(dbHisQueque.shift());
+        setTimeout(()=>{
+            his2Db(app);
+        },20)
+    }
+}
 module.exports = app => {
+  his2Db(app);
   const defaultConfig = {
     delegate: 'model',
     baseDir: 'model',
@@ -14,13 +38,9 @@ module.exports = app => {
       app.logger.info('[egg-sequelize]%s %s', used, args[0]);
       if(/(UDPATE|DELETE|INSERT)\s.+/g.test(args[0])){
         if(args[0].indexOf('db_history')===-1){
-          try{
-              app.model.DbHistory.create({
-                  sqlstr:args[0].replace('Executed (default):','')
-              })
-          }catch(e){
-            app.logger.error("数据库记录更新失败:"+args[0])
-          }
+            dbHisQueque.push({
+                sqlstr:args[0].replace('Executed (default):','')
+            });
         }
       }
     },
