@@ -22,6 +22,24 @@ class NpmController extends Controller {
     checkedModuleFileCondition(){
         this.ctx.body =  global.moduleCheckResult;
     }
-
+    async correctFilesByNpm(){
+        let params = this.ctx.request.body;
+        let modules = null;
+        if(!params.data&&params.length>0){
+            modules = params;
+        }else if(typeof params.data === 'string'){
+            modules = JSON.parse(params.data);
+        }else if(params.data instanceof Array){
+            modules = params.data;
+        }else{
+            this.ctx.body = {code:0,msg:'提交数据有误'};
+            return;
+        }
+        this.ctx.body =  await this.service.npmTool.correctFilesByNpm(modules);
+    }
+    async getPopular(){
+        let top = this.ctx.request.body.top;
+        this.ctx.body = await this.service.npmTool.getPopular(top);
+    }
 }
 module.exports = NpmController;

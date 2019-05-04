@@ -7,11 +7,18 @@ const urllib=require("urllib");
 const npm = require('../utils/npm');
 const common = require('../utils/common');
 const commonConfig = require('../../config/common');
-
-const nfs=require('../utils/fs-cnpm')({
-    dir: config.nfsPath
-});
+const fs = require('fs');
+const utility = require('utility');
+var USER_AGENT = 'sync.cnpmjs.org/' + commonConfig.version +
+    ' hostname/' + os.hostname() +
+    ' syncModel/' + 'exist' +
+    ' syncInterval/' + '10m' +
+    ' syncConcurrency/' + '1' +
+    ' ' + urllib.USER_AGENT;
 const nfsPath =commonConfig.nfsPath;
+const nfs=require('../utils/fs-cnpm')({
+    dir:nfsPath
+});
 global.moduleCheckResult = {
     count:0,
     missFiles:[],
@@ -90,13 +97,27 @@ class NpmTool extends Service {
         shasum = shasum.digest('hex');
         return shasum;
     }
-    async getFilesByNpm(modules){
+    async correctFilesByNpm(modules){
+        let errorModules = [];
+        for(let item of modules){
+            try{
+                await this.downPackage(item)
+            }catch (e) {
+                console.error(e);
+                errorModules.push(item);
+            }
 
+        }
+        if(errorModules.length<=0){
+            return {code:1,msg:"纠正完成"};
+        }else{
+            return {code:0,msg:'存在失败任务',data:errorModules};
+        }
     }
     async downPackage(module){
         let logger=this.app.logger;
         var _self=this;
-        let sourcePackage =await npm.request(module.name+"/"+module.version);
+        let sourcePackage =(await npm.request("/"+module.name+"/"+module.version)).data;
         var downurl = sourcePackage.dist.tarball;
         var filename = path.basename(downurl);
         var filepath = common.getTarballFilepath(filename);
@@ -158,8 +179,7 @@ class NpmTool extends Service {
                 logger.error('[sync_worker] upload %j to nfs error: %s', err);
                 throw err;
             }
-            var r = await afterUpload(result);
-            return r;
+            return  await afterUpload(result);
         } finally {
             // remove tmp file whatever
             fs.unlink(filepath, utility.noop);
@@ -183,10 +203,12 @@ class NpmTool extends Service {
                 dist.key = result.key;
                 dist.tarball = result.key;
             }
-            mod.package.dist = dist;
-            var r = await _self.app.model.Module.update({dist_shasum:dist.shasum,dist_size:dist.size},{where:{name:mod.name,version:mod.version}});
-            return r;
+            return await _self.app.model.Module.update({dist_shasum:dist.shasum,dist_size:dist.size},{where:{name:mod.name,version:mod.version}});
         }
+    }
+    async getPopular(top){
+        top = top||10;
+        return await npm.getPopular(top);
     }
 }
 module.exports=NpmTool;

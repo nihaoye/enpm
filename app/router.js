@@ -14,6 +14,7 @@ module.exports = app => {
   router.get('/npmTool/chartDeps',controller.npmTool.chartDeps);
   router.get('/npmTool/startCheckedModuleFile',controller.npmTool.startCheckedModuleFile);
   router.get('/npmTool/checkedModuleFileCondition',controller.npmTool.checkedModuleFileCondition);
+
   if(!app.config.isInternet){//内网环境配置的路由
     router.post('/package/task/add',controller.package.addTask);
     router.get('/package/listWaitTasks',controller.package.listWaitTasks);
@@ -27,5 +28,8 @@ module.exports = app => {
     router.post("/task/startNoSTasks",controller.syncTask.startNoSTasks);
     router.get("/tasks",controller.syncTask.listTask);
     router.get("/task/syncTaskCount",controller.syncTask.getTaskCount);
+
+    router.post('/npmTool/correctFilesByNpm',controller.npmTool.correctFilesByNpm);
+    router.get('/npmTool/popular',controller.npmTool.getPopular);
   }
 };
