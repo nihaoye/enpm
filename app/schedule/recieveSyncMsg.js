@@ -5,7 +5,7 @@ class RecvSyncMsg extends Subscription {
   static get schedule() {
     return {
         // 每周一上午10点
-        cron: '0 0 10 ? * 1',
+        cron: '0 0 2 ? * 1',
         type:'worker'
       };
   }

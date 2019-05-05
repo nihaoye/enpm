@@ -5,7 +5,7 @@ class BuildPackage extends Subscription {
   static get schedule() {
     return {
         // 每周二早上10点
-        cron: '0 0 10 ? * 2',
+        cron: '0 0 2 ? * 2',
         type:'worker'
       };
   }
