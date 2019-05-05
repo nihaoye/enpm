@@ -10,7 +10,7 @@ Target Server Type    : MYSQL
 Target Server Version : 50528
 File Encoding         : 65001
 
-Date: 2019-05-05 11:23:15
+Date: 2019-05-05 12:36:42
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -25,10 +25,6 @@ CREATE TABLE `db_history` (
   `sqlstr` longtext,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=133 DEFAULT CHARSET=utf8;
-
--- ----------------------------
--- Records of db_history
--- ----------------------------
 
 -- ----------------------------
 -- Table structure for downloads
@@ -77,10 +73,6 @@ CREATE TABLE `downloads` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
--- Records of downloads
--- ----------------------------
-
--- ----------------------------
 -- Table structure for module
 -- ----------------------------
 DROP TABLE IF EXISTS `module`;
@@ -105,10 +97,6 @@ CREATE TABLE `module` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
--- Records of module
--- ----------------------------
-
--- ----------------------------
 -- Table structure for module_abbreviated
 -- ----------------------------
 DROP TABLE IF EXISTS `module_abbreviated`;
@@ -127,10 +115,6 @@ CREATE TABLE `module_abbreviated` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
--- Records of module_abbreviated
--- ----------------------------
-
--- ----------------------------
 -- Table structure for module_deps
 -- ----------------------------
 DROP TABLE IF EXISTS `module_deps`;
@@ -143,10 +127,6 @@ CREATE TABLE `module_deps` (
   UNIQUE KEY `module_deps_name_deps` (`name`,`deps`),
   KEY `module_deps_deps` (`deps`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- ----------------------------
--- Records of module_deps
--- ----------------------------
 
 -- ----------------------------
 -- Table structure for module_keyword
@@ -164,10 +144,6 @@ CREATE TABLE `module_keyword` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
--- Records of module_keyword
--- ----------------------------
-
--- ----------------------------
 -- Table structure for module_log
 -- ----------------------------
 DROP TABLE IF EXISTS `module_log`;
@@ -181,10 +157,6 @@ CREATE TABLE `module_log` (
   PRIMARY KEY (`id`),
   KEY `module_log_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- ----------------------------
--- Records of module_log
--- ----------------------------
 
 -- ----------------------------
 -- Table structure for module_maintainer
@@ -201,26 +173,18 @@ CREATE TABLE `module_maintainer` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
--- Records of module_maintainer
--- ----------------------------
-
--- ----------------------------
 -- Table structure for module_star
 -- ----------------------------
 DROP TABLE IF EXISTS `module_star`;
 CREATE TABLE `module_star` (
   `id` varchar(64) NOT NULL DEFAULT '',
-  `user` varchar(100) NOT NULL,
+  `user` varchar(100) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   `name` varchar(100) NOT NULL,
   `gmt_create` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `module_star_user_name` (`user`,`name`),
   KEY `module_star_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- ----------------------------
--- Records of module_star
--- ----------------------------
 
 -- ----------------------------
 -- Table structure for module_unpublished
@@ -238,26 +202,18 @@ CREATE TABLE `module_unpublished` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
--- Records of module_unpublished
--- ----------------------------
-
--- ----------------------------
 -- Table structure for npm_module_maintainer
 -- ----------------------------
 DROP TABLE IF EXISTS `npm_module_maintainer`;
 CREATE TABLE `npm_module_maintainer` (
   `id` varchar(64) NOT NULL DEFAULT '',
-  `user` varchar(100) NOT NULL,
+  `user` varchar(100) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   `name` varchar(100) NOT NULL,
   `gmt_create` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `npm_module_maintainer_user_name` (`user`,`name`),
   KEY `npm_module_maintainer_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- ----------------------------
--- Records of npm_module_maintainer
--- ----------------------------
 
 -- ----------------------------
 -- Table structure for package_readme
@@ -274,10 +230,6 @@ CREATE TABLE `package_readme` (
   UNIQUE KEY `package_readme_name` (`name`),
   KEY `package_readme_gmt_modified` (`gmt_modified`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- ----------------------------
--- Records of package_readme
--- ----------------------------
 
 -- ----------------------------
 -- Table structure for sync_task
@@ -300,17 +252,13 @@ CREATE TABLE `sync_task` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ----------------------------
--- Records of sync_task
--- ----------------------------
-
--- ----------------------------
 -- Table structure for tag
 -- ----------------------------
 DROP TABLE IF EXISTS `tag`;
 CREATE TABLE `tag` (
   `id` varchar(64) NOT NULL DEFAULT '',
   `name` varchar(100) NOT NULL,
-  `tag` varchar(30) NOT NULL,
+  `tag` varchar(30) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   `version` varchar(100) NOT NULL,
   `module_id` varchar(64) NOT NULL,
   `gmt_create` datetime NOT NULL,
@@ -319,10 +267,6 @@ CREATE TABLE `tag` (
   UNIQUE KEY `tag_name_tag` (`name`,`tag`),
   KEY `tag_gmt_modified` (`gmt_modified`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- ----------------------------
--- Records of tag
--- ----------------------------
 
 -- ----------------------------
 -- Table structure for total
@@ -342,10 +286,6 @@ CREATE TABLE `total` (
   `gmt_modified` datetime NOT NULL,
   PRIMARY KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- ----------------------------
--- Records of total
--- ----------------------------
 
 -- ----------------------------
 -- Table structure for user
@@ -368,7 +308,3 @@ CREATE TABLE `user` (
   UNIQUE KEY `user_name` (`name`),
   KEY `user_gmt_modified` (`gmt_modified`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- ----------------------------
--- Records of user
--- ----------------------------
