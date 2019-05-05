@@ -1,13 +1,8 @@
-
 const path=require('path');
 const fse = require('fs-extra');
-const tarfold=require('../utils/tarFolds')
 const commonConfig=require('../../config/common');
 const targetPath=path.join(commonConfig.resourcePath,'sync_packages');
-const msger=require('../utils/msger');
-const dayjs = require('dayjs');
 const Op = require('sequelize').Op;
-const zipper = require('zip-local');
 const svn = require('../utils/svn');
 const isEmpty = require('lodash/isEmpty')
 class PackageUtil{
@@ -156,10 +151,6 @@ class PackageUtil{
         await this.dbHistoryBuild();
         return {code:1,msg:"数据库历史打包成功"};
     }
-    async copyPackage(pkg){
-        const sourcePath=commonConfig.nfsPath;
-        return await fse.copy(sourcePath+"\\"+pkg.dist_tarball,targetPath+'\\tmp\\nfs'+"\\"+pkg.dist_tarball);
-    }
     async dbHistoryBuild(){
         let dbHis=await this.model.DbHistory.findAll({order:[['id','ASC']]});
         let hz = '';
@@ -173,10 +164,6 @@ class PackageUtil{
         }
         await fse.writeJson(path.join(targetPath,'db_history'+hz+'.json'),dbHis);
         return dbHis;
-    }
-    extractPackage(filePath){
-        console.log("开始解压文件");
-        return zipper.sync.unzip(filePath).save(path.resolve(targetPath,"tmp2"));
     }
 }
 module.exports=PackageUtil;
