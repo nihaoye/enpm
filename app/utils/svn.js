@@ -12,18 +12,19 @@ function checkout(){
 }
 function update(){
     return new Promise((resolve,reject)=>{
-        svnUltimate.commands.update(svnConfig.registry,
+        svnUltimate.commands.update(svnConfig.cwd,
             {	// optional options object - can be passed to any command not just update
                 trustServerCert: true,	// same as --trust-server-cert
                 username: svnConfig.username,	// same as --username
                 password: svnConfig.password,	// same as --password
-                shell: "sh", 			// override shell used to execute command
                 cwd:svnConfig.cwd,		// override working directory command is executed
-                force: true,			// provide --force to commands that accept it
+                force: true
             },
             function( err ) {
                 if(!err){
                     console.log( "Update complete" );
+                }else{
+                    console.log(err);
                 }
                 resolve(err)
             } );
@@ -31,17 +32,29 @@ function update(){
 }
 function commit(){
     return  new Promise((resolve,reject)=>{
-        svnUltimate.commands.commit(svnConfig.cwd,{
+        svnUltimate.commands.add(svnConfig.cwd+"\\*",{
             trustServerCert: true,	// same as --trust-server-cert
             username: svnConfig.username,	// same as --username
             password: svnConfig.password,	// same as --password
-            shell: "sh", 			// override shell used to execute command
+            cwd:svnConfig.cwd,
+            force: true
         },(err)=>{
-            if(!err){
-                console.log('commit complete');
-            }
-            resolve(err);
-        });
+            svnUltimate.commands.commit(svnConfig.cwd,{
+                trustServerCert: true,	// same as --trust-server-cert
+                username: svnConfig.username,	// same as --username
+                password: svnConfig.password,	// same as --password
+                params: [ '-m "提交npm"' ],
+                force: true
+            },(err)=>{
+                if(!err){
+                    console.log('commit complete');
+                }else{
+                    console.log(err);
+                }
+                resolve(err);
+            });
+        })
+        
     })
 }
 module.exports = {checkout,update,commit}

@@ -66,7 +66,7 @@ class PackageController extends Controller {
         let result=null;
         fse.ensureFileSync(this.app.config.resourcePath+'/sync_packages/syncMsg.json');
         let syncMsg=fse.readFileSync(this.app.config.resourcePath+'/sync_packages/syncMsg.json','utf8');
-        syncMsg=syncMsg?JSON.parse(syncMsg):[];
+        syncMsg=(syncMsg?JSON.parse(syncMsg):[]);
         for(let item of syncMsg){
             if(item.name==params.name.trim()&&item.version==params.version.trim()){
                 result=item;
@@ -105,7 +105,7 @@ class PackageController extends Controller {
     listWaitTasks(){
         fse.ensureFileSync(this.ctx.app.config.resourcePath+'/sync_packages/syncMsg.json')
         let json=fse.readFileSync(this.ctx.app.config.resourcePath+'/sync_packages/syncMsg.json','utf8');
-        json=json?JSON.parse(json):[];
+        json=(json?JSON.parse(json):[]);
         this.ctx.body=json;
     }
 }

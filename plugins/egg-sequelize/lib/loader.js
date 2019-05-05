@@ -36,7 +36,7 @@ module.exports = app => {
       // if benchmark enabled, log used
       const used = typeof args[1] === 'number' ? `(${args[1]}ms)` : '';
       app.logger.info('[egg-sequelize]%s %s', used, args[0]);
-      if(/(UDPATE|DELETE|INSERT)\s.+/g.test(args[0])){
+      if(!global.dbhisLock && /(UDPATE|DELETE|INSERT)\s.+/g.test(args[0])){
         if(args[0].indexOf('db_history')===-1){
             dbHisQueque.push({
                 sqlstr:args[0].replace('Executed (default):','')

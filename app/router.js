@@ -19,7 +19,7 @@ module.exports = app => {
     router.post('/package/task/add',controller.package.addTask);
     router.get('/package/listWaitTasks',controller.package.listWaitTasks);
     router.post('/package/buildSyncMsg',controller.package.buildAndSendSyncMsg);
-    router.post('/package/recieveAndSavePackage',controller.package.recieveAndSavePackage);
+    router.post('/package/recievePackage',controller.package.recieveAndSavePackage);
   }else{//外网环境配置路由
     router.post('/package/buildAndSendPackage',controller.package.buildAndSendPackage);
     router.post('/package/recieveSyncMsg',controller.package.recieveSyncMsg);

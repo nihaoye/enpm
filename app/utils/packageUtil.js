@@ -39,7 +39,7 @@ class PackageUtil{
     }
     async recieveAndSavePackage(){
        this.app.logger.info("从"+(commonConfig.isInternet?'内网':'外网')+"接收同步包并解析同步数据库");
-       if(svn.update()){
+       if(await svn.update()){
            this.app.logger.warn("svn同步失败");
            return {code:0,msg:'svn同步失败'};
        }
@@ -53,15 +53,22 @@ class PackageUtil{
             fse.ensureFileSync(path.join(targetPath,"db_history"+hz+".json"))
         }
        let dbhis=await fse.readFile(path.join(targetPath,"db_history"+hz+".json"),'utf-8');
-       dbhis&&JSON.parse(dbhis);
+       dbhis&&(dbhis = JSON.parse(dbhis));
        if(isEmpty(dbhis)){
            this.app.logger.info("不需要同步");
            return {code:2,msg:'不需要同步'};
        }
         this.app.logger.info("开始写入sql");
-       for(let item of dbhis){
-        await this.app.model.query(item.sqlstr);
-       }
+        global.dbhisLock = true;
+        try{
+            for(let item of dbhis){
+                await this.app.model.query(item.sqlstr);
+            }
+        }catch(err){
+            this.app.logger.error(err);
+        }finally{
+            global.dbhisLock = false;
+        }
        this.app.logger.info("写入完成");
        await fse.writeFile(path.join(targetPath,"db_history"+hz+".json"),"");
        if(await svn.commit()){
@@ -78,7 +85,7 @@ class PackageUtil{
             fse.ensureFileSync(targetPath+'/syncMsg.json');
         }
         let syncMsg=fse.readFileSync(targetPath+'/syncMsg.json','utf8');
-        syncMsg=syncMsg?JSON.parse(syncMsg):[];
+        syncMsg=(syncMsg?(syncMsg = JSON.parse(syncMsg)):[]);
         if(syncMsg.length>0){
             this.app.logger.info("发送同步消息");
             if(await svn.update()){
@@ -103,10 +110,11 @@ class PackageUtil{
             this.app.logger.warn("svn更新失败");
             return {code:0,msg:"svn更新失败"};
         }
-        if(!fse.existsSync(targetPath+"/syncMsg.log")){
-            fse.ensureFileSync(targetPath+"/syncMsg.log");
+        if(!fse.existsSync(targetPath+"/syncMsg.json")){
+            fse.ensureFileSync(targetPath+"/syncMsg.json");
         }
-        let syncMsg=fse.readFileSync(targetPath+"/syncMsg.log",'utf8');
+        let syncMsg=fse.readFileSync(targetPath+"/syncMsg.json",'utf8');
+        syncMsg=(syncMsg?(syncMsg = JSON.parse(syncMsg)):[]);
         if(isEmpty(syncMsg)){
             this.app.logger.info("没有需要同步的消息");
             return {code:2,msg:"没有需要同步的消息"};
@@ -118,12 +126,12 @@ class PackageUtil{
             }
             await this.service.syncTask.addTask(syncMsg[i]);
         }
-        fse.writeFileSync(targetPath+'/syncMsg.log',"");
+        fse.writeFileSync(targetPath+'/syncMsg.json',"");
         if(await svn.commit()){
             this.app.logger.warn('svn提交失败');
             return {code:0,msg:"svn提交失败"};
         }
-        this.service.syncTask.startNosTasks();
+        await this.service.syncTask.startNosTasks();
         return {code:0,msg:"同步成功",data:syncMsg};
     }
     async buildPackage(){
