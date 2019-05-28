@@ -4,6 +4,7 @@ const Controller = require('egg').Controller;
 const fse=require("fs-extra");
 const path = require('path');
 const svnSetting = require('../../config/svn');
+const commonConfig = require('../../config/common')
 const jsbtf = require('js-beautify')
 class SvnSettingController extends Controller {
     index(){
@@ -51,6 +52,17 @@ class SvnSettingController extends Controller {
             code:1,
             msg:'修改成功'
         };
+        if(await fse.pathExists(path.join(commonConfig.resourcePath, ".svn"))){
+            await fse.rmdir(path.join(commonConfig.resourcePath, ".svn"))
+        }
+        try{
+            console.log('svn连接测试...')
+            svn.checkout().then(()=>{
+              console.log('svn连接测试:成功')
+            });
+          }catch(e){
+            console.log('svn连接测试:失败')
+          }
     }
 }
 
