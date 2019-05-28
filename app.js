@@ -11,15 +11,15 @@ module.exports = app => {
       .pathExists(path.join(commonConfig.resourcePath, ".svn"))
       .then(isExist => {
         if (!isExist) {
-          try{
             console.log('svn连接测试...')
-            svn.checkout().then(()=>{
-              console.log('svn连接测试:成功')
+            svn.checkout().then((e)=>{
+              if(e){
+                console.log('svn连接测试:失败')
+              }else{
+                console.log('svn连接测试:成功')
+              }
+              
             })
-            
-          }catch(e){
-            console.log('svn连接测试:失败')
-          }
         }
       });
     try {

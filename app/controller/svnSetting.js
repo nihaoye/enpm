@@ -6,6 +6,7 @@ const path = require('path');
 const svnSetting = require('../../config/svn');
 const commonConfig = require('../../config/common')
 const jsbtf = require('js-beautify')
+const svn = require('../utils/svn')
 class SvnSettingController extends Controller {
     index(){
         this.ctx.body = {
@@ -48,21 +49,23 @@ class SvnSettingController extends Controller {
         svnSetting.username = params.username;
         svnSetting.password = params.password;
         svnSetting.registry = params.registry;
-        this.ctx.body = {
-            code:1,
-            msg:'修改成功'
-        };
         if(await fse.pathExists(path.join(commonConfig.resourcePath, ".svn"))){
             await fse.rmdir(path.join(commonConfig.resourcePath, ".svn"))
         }
-        try{
-            console.log('svn连接测试...')
-            svn.checkout().then(()=>{
-              console.log('svn连接测试:成功')
-            });
-          }catch(e){
-            console.log('svn连接测试:失败')
-          }
+        let isSuccess = true;
+        console.log('svn连接测试...')
+        let err = await svn.checkout();
+        if(err){
+            this.ctx.body = {
+                code:1,
+                msg:'修改成功,但链接测试失败'
+            };
+        }else{
+            this.ctx.body = {
+                code:1,
+                msg:'修改成功'
+            };
+        }
     }
 }
 
