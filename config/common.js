@@ -1,6 +1,6 @@
 const pkg=require("../package.json");
 const path=require("path");
-const resourcePath=path.join(process.cwd(),'.enpm');
+const resourcePath=path.join("/",'.enpm');
 module.exports={
     resourcePath:resourcePath,
     version:pkg.version,

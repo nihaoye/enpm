@@ -15,6 +15,12 @@ module.exports = app => {
   router.get('/npmTool/startCheckedModuleFile',controller.npmTool.startCheckedModuleFile);
   router.get('/npmTool/checkedModuleFileCondition',controller.npmTool.checkedModuleFileCondition);
 
+  //svn setting
+  router.get('/svn',controller.svnSetting.view);
+  router.get('/svn/setting',controller.svnSetting.index);
+  router.post('/svn/setting/edit',controller.svnSetting.edit);
+
+
   if(!app.config.isInternet){//内网环境配置的路由
     router.post('/package/task/add',controller.package.addTask);
     router.get('/package/listWaitTasks',controller.package.listWaitTasks);
